@@ -5,7 +5,7 @@
 | **Author** | John Haverlack |
 | **Copyright** | 2026 John Haverlack |
 | **License** | MIT |
-| **Version** | 0.3.0 |
+| **Version** | 0.3.1 |
 | **Date** | 2026-01-31 |
 
 
