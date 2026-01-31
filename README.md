@@ -23,7 +23,7 @@ See also: [Installation](docs/INSTALL.md)
 ```
 $ git clone https://github.com/jhaverlack/sdl.git
 $ cd sdl
-$ install-sdl.sh
+$ ./install-sdl.sh
 ```
 
 Point you browser to http://IP-ADDR:8081

@@ -314,12 +314,6 @@ function renderModulesTable(msg) {
   const modules = msg.msg.modules;
   let html = '<h5>Service Modules</h5>';
   html += '<table class="table table-sm table-striped">';
-    //   <thead>
-    //     <tr>
-    //       <th>Module</th>
-    //       <th>Status</th>
-    //     </tr>
-    //   </thead>
   html += `<tbody> `;
 
   for (const [name, info] of Object.entries(modules)) {
@@ -330,7 +324,7 @@ function renderModulesTable(msg) {
 
     html += `
       <tr>
-        <th${name}</th>
+        <th>${name}</th>
         <td>${icon}</td>
       </tr>
     `;
