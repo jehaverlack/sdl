@@ -1,0 +1,11 @@
+{
+  "releases": [
+    {
+      "version": "0.3.0",
+      "date": "2026-01-31",
+      "maturity": "ALPHA",
+      "summary": "Initial Codebase",
+      "notes": ""
+    }
+  ]
+}

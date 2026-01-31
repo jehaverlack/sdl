@@ -1,0 +1,29 @@
+[Unit]
+Description=SDL Manager
+After=network.target
+
+[Service]
+Type=simple
+
+# Paths
+Environment=SDL_HOME=%h/.sdl
+
+WorkingDirectory=%h/.sdl/sdl-mgr/current/app
+
+# Start command
+ExecStart=%h/.sdl/nodejs/current/bin/node index.js
+
+# Restart behavior
+Restart=on-failure
+RestartSec=3
+
+# Logging
+StandardOutput=append:%h/.sdl/logs/sdl-mgr.out.log
+StandardError=append:%h/.sdl/logs/sdl-mgr.err.log
+
+# Clean shutdown
+KillSignal=SIGTERM
+TimeoutStopSec=15
+
+[Install]
+WantedBy=default.target

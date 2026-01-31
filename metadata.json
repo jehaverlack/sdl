@@ -1,0 +1,41 @@
+{
+  "METADATA": {
+    "name": "sdl",
+    "description": "Software Defined Laboratory",
+    "abbr": "SDL",
+    "version": "0.3.0",
+    "version_date": "2026-01-31",
+    "maturity": "ALPHA",
+    "author": "John Haverlack",
+    "copyright": "2026 John Haverlack",
+    "license": "MIT",
+    "license_url": "https://opensource.org/license/MIT",
+    "homepage": "https://github.com/jehaverlack/sdl",
+    "git_repo": "https://github.com/jehaverlack/sdl.git"
+  },
+  "META_MAPS": {
+    "package.json": {
+      "version": "version",
+      "version_date": "version_date",
+      "author": "author",
+      "copyright": "copyright",
+      "license": "license",
+      "license_url": "license_url",
+      "homepage": "homepage"
+    },
+    "*.md": {
+      "**Version**": "version",
+      "**Date**": "version_date",
+      "**Author**": "author",
+      "**Copyright**": "copyright",
+      "**License**": "license",
+      "**Homepage**": "homepage"
+    }
+  },
+  "MANIFEST": [
+    "README.md",
+    "docs/DESIGN.md",
+    "sdl-mgr/app/package.json",
+    "sdl-wkr/app/package.json"
+  ]
+}

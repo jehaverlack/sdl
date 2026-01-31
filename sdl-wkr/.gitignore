@@ -1,0 +1,5 @@
+conf/secrets/*
+app/node_modules/*
+data/*
+logs/*
+**/.~lock*#

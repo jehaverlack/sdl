@@ -1,0 +1,37 @@
+{
+    "enabled": true,
+    "bind_ip_addrs": ["0.0.0.0"],
+    "mqtt_port": 1883,
+    "ws_port": 9001,
+    "topics":{
+        "sdl-mgr":{
+            "pub": {
+                "sdl_join-auth": "sdl/join/auth",
+                "sdl_cluster-status": "sdl/cluster/status",
+                "sdl_cluster-workers": "sdl/cluster/workers"
+            },
+            "sub": {
+                "sdl_join-req": "sdl/join/req",
+                "sdl_cluster-telemetry": "sdl/cluster/telemetry"
+            }
+        },
+        "sdl-wkr":{
+            "pub": {
+                "sdl_join-req": "sdl/join/req",
+                "sdl_cluster-telemetry": "sdl/cluster/telemetry"
+            },
+            "sub": {
+                "sdl_join-auth": "sdl/join/auth",
+                "sdl_cluster-status": "sdl/cluster/status"
+            }
+        },
+        "sdl-web": {
+            "pub": {
+            },
+            "sub": {
+                "sdl_cluster-status": "sdl/cluster/status",
+                "sdl_cluster-workers": "sdl/cluster/workers"
+            }
+        }
+    }
+}

@@ -1,0 +1,26 @@
+{
+    "cluster": {
+        "id": "haverlab",
+        "name": "Haverlab",
+        "desc": "John Haverlack's Home Lab"
+    },
+    "dirs": {
+        "base": "DIRNAME/../..",
+        "sdlhome": "SDLHOME",
+        "app": "BASE/app",
+        "modules": "APP/modules",
+        "dist": "SDLHOME/dist",
+        "logs": "SDLHOME/logs",
+        "data": "SDLHOME/data",
+        "proj": "DATA/proj",
+        "jobs": "DATA/jobs",
+        "conf": "SDLHOME/conf",
+        "modconf": "BASE/conf/modules",
+        "html": "BASE/html"
+    },
+    "modules": {
+        "mqtt": {},
+        "web": {},
+        "sdl-mgr": {}
+    }
+}

@@ -1,0 +1,36 @@
+body {
+  font-family: sans-serif;
+  /* margin: 2rem; */
+}
+  
+header h2 {
+  margin: 0;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin-top: 1rem;
+}
+
+th, td {
+  border: 1px solid #ccc;
+  padding: 8px;
+}
+
+th {
+  background: #f0f0f0;
+}
+
+#page {
+  min-height: 500px;
+}
+
+.custom-header {
+  background-color: #003764;
+  color: #fff;
+}
+
+footer {
+  --bs-secondary-color: #666;
+}

@@ -1,0 +1,115 @@
+{
+  "sdl":{
+    "title": "SDL",
+    "desc": "Software Defined Laboratory",
+    "icon": "fa-solid fa-square-binary",
+    "page": "index",
+    "enabled": false,
+    "items": []
+  },
+  "dash": {
+    "title": "Dash",
+    "desc": "Dashboard",
+    "icon": "fa-solid fa-gauge",
+    "page": "dash",
+    "enabled": true,
+    "items": []
+  },
+  "wkrs": {
+    "title": "Workers",
+    "desc": "Workers",
+    "icon": "fa-solid fa-server",
+    "page": "wkrs",
+    "enabled": true,
+    "items": []
+  },
+  "proj": {
+    "title": "Projects",
+    "desc": "Projects",
+    "icon": "fa-solid fa-layer-group",
+    "page": "proj",
+    "enabled": true,
+    "items": [
+      {
+        "title": "Experiments",
+        "desc": "Experiments",
+        "icon": "fa-solid fa-flask",
+        "page": "expr",
+        "enabled": true
+      }
+    ]
+  },
+  "jobs": {
+    "title": "Jobs",
+    "desc": "Jobs",
+    "icon": "fa-solid fa-person-digging",
+    "page": "jobs",
+    "enabled": true,
+    "items": []
+  },
+  "app": {
+    "title": "App",
+    "icon": "fa-solid fa-dice-d20",
+    "enabled": false,
+    "items": [
+      {
+        "title": "About",
+        "icon": "fa-solid fa-circle-info",
+        "page": "about",
+        "enabled": true
+      },
+      {
+        "title": "API",
+        "icon": "fa-solid fa-code",
+        "page": "api",
+        "enabled": true
+      },
+      {
+        "title": "Docs",
+        "icon": "fa-solid fa-book",
+        "page": "docs",
+        "enabled": false
+      }
+    ]
+  },
+
+  "experiments": {
+    "title": "Experiments",
+    "icon": "fa-solid fa-flask",
+    "enabled": false,
+    "items": [
+      {
+        "title": "Browse",
+        "icon": "fa-solid fa-table-list",
+        "page": "experiments",
+        "enabled": true
+      },
+      {
+        "title": "New Experiment",
+        "icon": "fa-solid fa-plus",
+        "page": "experiment-new",
+        "enabled": true
+      }
+    ]
+  },
+
+  "runs": {
+    "title": "Runs",
+    "icon": "fa-solid fa-play",
+    "enabled": false,
+    "items": [
+      {
+        "title": "Active Runs",
+        "icon": "fa-solid fa-spinner",
+        "page": "runs-active",
+        "enabled": true
+      },
+      {
+        "title": "History",
+        "icon": "fa-solid fa-clock-rotate-left",
+        "page": "runs-history",
+        "enabled": true
+      }
+    ]
+  }
+}
