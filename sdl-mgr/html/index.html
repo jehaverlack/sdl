@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title></title>
+
+  <link rel="icon" href="/img/favicon.ico">
+  
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="/bootstrap/css/bootstrap.min.css">
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="/fontawesome/css/all.min.css">
+
+  <script src="/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+  <script src="/marked/marked.min.js" defer></script>
+
+  <link rel="stylesheet" href="/css/nwa.css" />
+  <link rel="stylesheet" href="/css/custom-styles.css" />
+
+    <script>
+  window.MathJax = {
+    tex: {
+      inlineMath: [["$", "$"], ["\\(", "\\)"]],
+      displayMath: [["$$", "$$"], ["\\[", "\\]"]],
+    },
+    svg: {
+      fontCache: "global"
+    }
+  };
+  </script>
+
+  <script src="/mathjax/tex-svg.js" id="MathJax-script" async></script>
+
+  <script src="/chartjs/chart.umd.min.js" defer></script>
+
+  <script src="/d3/d3.min.js" defer></script>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "/three/build/three.module.js"
+    }
+  }
+  </script>
+
+  <script src="/graphjs/graph.full.js"></script>
+ 
+  <script src="/json-viewer/json-viewer.bundle.js"></script>
+
+  <script src="/mqttjs/mqtt.min.js"></script>
+
+  <script src="/html-to-image/html-to-image.js"></script>
+
+  <script type="module" src="/js/weblib.js"></script>
+</head>
+    <body style="overflow-x: hidden;">
+        <div id="banner"></div>
+
+        <div id="nav"></div>
+    
+        <div class="container-fluid">
+          <div class="row d-flex flex-nowrap">
+      
+            <aside id="sidepanel" class="bg-light">
+              <!-- Collapse / expand rail -->
+              <div id="sidepanel-rail">
+                <button
+                  id="sidepanel-toggle"
+                  class="btn btn-sm btn-outline-secondary"
+                  title="Toggle side panel">
+                  <i class="fa-solid fa-folder-minus"></i>
+                </button>
+              </div>
+
+              <!-- Dynamic content goes here -->
+              <div id="sidepanel-inner"></div>
+            </aside>
+
+            <main id="page" class="flex-grow-1"></main>
+
+          </div>
+        </div>
+
+
+        <div id="footer"></div>
+    </body>
+</html>

@@ -1,0 +1,20 @@
+{
+    "enabled": true,
+    "bind_ip_addrs": ["0.0.0.0"],
+    "port": 8081,
+    "open_browser": false,
+    "weblibs": {
+        "bootstrap":"bootstrap/dist",
+        "chartjs":"chart.js/dist",
+        "d3":"d3/dist",
+        "fontawesome":"@fortawesome/fontawesome-free",
+        "graphjs":"graph.js/dist",
+        "html-to-image":"html-to-image/dist",
+        "json-viewer":"@alenaksu/json-viewer/dist",
+        "marked":"marked",
+        "mathjax":"mathjax-full/es5",
+        "mqttjs":"mqtt/dist",
+        "three/examples/jsm":"three/examples/jsm",
+        "three":"three"
+    }
+}

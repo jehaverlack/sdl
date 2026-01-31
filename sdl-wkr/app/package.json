@@ -1,0 +1,30 @@
+{
+  "name": "sdl-wkr",
+  "description": "Software Defined Laboratory: Worker (sdl-wkr)",
+  "version": "0.3.0",
+  "version_date": "2026-01-31",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jehaverlack/sdl.git"
+  },
+  "author": "John Haverlack",
+  "copyright": "2026 John Haverlack",
+  "license": "MIT",
+  "license_url": "https://opensource.org/license/MIT",
+  "bugs": {
+    "url": ""
+  },
+  "homepage": "https://github.com/jehaverlack/sdl",
+  "dependencies": {
+    "csv-parse": "^5.6.0",
+    "mqtt": "^5.14.1",
+    "node-fetch": "^3.3.2",
+    "open": "^11.0.0",
+    "yargs": "^18.0.0"
+  }
+}

@@ -1,0 +1,4 @@
+dist/*
+sdl-home/logs/*
+sdl-home/data/*
+sdl-id.json

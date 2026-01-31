@@ -1,0 +1,25 @@
+{
+    "DIRS": {
+        "SDL_HOME": "~/.sdl",
+        "SDL_CONF": "SDL_HOME/conf",
+        "SDL_LOGS": "SDL_HOME/logs",
+        "SDL_DIST": "SDL_HOME/dist",
+        "SDL_DATA": "SDL_HOME/data",
+        "SDL_PROJ": "SDL_DATA/proj",
+        "SDL_JOBS": "SDL_DATA/jobs",
+        "SDL_MGR": "SDL_HOME/sdl-mgr",
+        "SDL_WKR": "SDL_HOME/sdl-wkr",
+        "SDL_NODEJS": "SDL_HOME/nodejs"
+    },
+    "NODEJS": {
+        "VERSION": "22.22.0",
+        "TARGETS": [
+            "linux:x64",
+            "linux:arm64",
+            "linux:armv7l",
+            "darwin:x64",
+            "darwin:arm64",
+            "win:x64"
+        ]
+    }
+}

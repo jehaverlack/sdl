@@ -1,0 +1,17 @@
+{
+    "dirs": {
+        "base": "DIRNAME/../..",
+        "sdlhome": "SDLHOME",
+        "app": "BASE/app",
+        "modules": "APP/modules",
+        "logs": "SDLHOME/logs",
+        "data": "SDLHOME/data",
+        "proj": "DATA/projects",
+        "jobs": "DATA/jobs",
+        "conf": "SDLHOME/conf",
+        "modconf": "BASE/conf/modules"
+    },
+    "modules": {
+        "sdl-wkr": {}
+    }
+}

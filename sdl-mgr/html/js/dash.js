@@ -1,0 +1,397 @@
+// ===============================
+// SDL Dashboard MQTT Client
+// ===============================
+import { getConfig } from './weblib.js';
+
+const config = await getConfig();
+// console.log('config:', JSON.stringify(config, null, 2));
+
+let mqttClient = null;
+let mqttConfig = null;
+let sdlConfig = null;
+let lastSdlStatus = null;
+let lastSdlTimestamp = null;
+let statusCheckTimer = null;
+const STALE_GRACE_MS = 2000;
+
+
+// -------------------------------
+// GPU Summary (for dashboard)
+// -------------------------------
+let gpuSummary = 'None';
+
+if (Array.isArray(config.host.gpu) && config.host.gpu.length > 0) {
+  gpuSummary = config.host.gpu.map(gpu => {
+    const displayName =
+      gpu.vendor === 'nvidia'
+        ? `NVIDIA ${shortGpuName(gpu)}`
+        : `Intel ${shortGpuName(gpu)}`;
+
+    const fullName = gpu.model;
+
+    let memLabel = '';
+    // if (gpu.memory?.type === 'dedicated' && gpu.memory.total_mb) {
+    if (
+      gpu.memory?.type === 'dedicated' &&
+      Number.isFinite(gpu.memory.total_mb)
+    ) {
+      memLabel = `(<span class="text-success">${Math.round(gpu.memory.total_mb / 1024)}</span> GB VRAM)`;
+    } else if (gpu.memory?.type === 'shared') {
+      memLabel = '(shared VRAM)';
+    } else {
+      console.log('ERR: gpu.memory:', JSON.stringify(gpu.memory));
+    }
+
+    return `
+      <span
+        style="font-size:0.75em; cursor:help"
+        title="${fullName}">
+        ${displayName} ${memLabel}
+      </span>
+    `;
+  }).join('<br>');
+}
+
+// Hostinfo: hostname, cpu, cores, ram, os
+const hostinfo = {
+    "hostname": '<span class="text-success">' + config.host.hostname + '</span>',
+    "sdl_id": '<span class="text-success" style=" font-size:0.7em">' + config.identity.sdl_id + '</span>',
+    "cpu cores": '<span class="text-success">' + config.host.cpu.cores_logical + '</span> <span style="font-size:0.7em">' + config.host.cpu.model + '</span>',
+    // "cores": config.host.cpu.cores_logical,
+    "ram": '<span class="text-success">' + config.host.memory.total_gb + '</span> GB ',
+    "gpu": gpuSummary,
+    "net": "",
+    "os": config.host.os.pretty_name
+}
+
+
+for (let intf in config.host.network) {
+    // console.log(intf, JSON.stringify(config.host.network[intf], null, 2));
+    if (intf != 'lo') {
+      for (let addr in config.host.network[intf]) {
+        if (config.host.network[intf][addr].family == 'IPv4') {
+          hostinfo["net"] += '<span class="text-success" style=" font-size: 0.8em">' + config.host.network[intf][addr].cidr + '</span><br> ';
+        }
+      }
+    }    
+} 
+
+
+let host_html = '<h5>SDL Manager Host</h5>\n';
+host_html += '<table class="table table-sm table-striped">\n';
+// host_html += '<thead>\n';
+// host_html += '<tr>\n';
+// host_html += '<th>Key</th>\n';
+// host_html += '<th>Value</th>\n';
+// host_html += '</tr>\n';
+// host_html += '</thead>\n';
+host_html += '<tbody>\n';
+
+for (let key in hostinfo) {
+    host_html += '<tr>\n';
+    host_html += '<td><b>' + key + '</b></td>\n';
+    host_html += '<td>' + hostinfo[key] + '</td>\n';
+    host_html += '</tr>\n';
+}
+
+host_html += '</tbody>\n';
+host_html += '</table>\n';
+
+document.getElementById('dash-sdl-mgr-info').innerHTML = host_html;
+
+initMqtt();
+
+// function shortGpuName(gpu) {
+//   let name = gpu.model;
+
+//   // Strip vendor boilerplate
+//   name = name
+//     .replace(/^NVIDIA Corporation\s+/i, '')
+//     .replace(/^Intel Corporation\s+/i, '');
+
+//   // NVIDIA cleanup
+//   if (gpu.vendor === 'nvidia') {
+//     name = name.replace(/^GeForce\s+/i, 'RTX ');
+//   }
+
+//   // Intel cleanup
+//   if (gpu.vendor === 'intel') {
+//     name = name.replace(/\s*\[.*?\]\s*/g, '');
+//   }
+
+//   return name.trim();
+// }
+
+function shortGpuName(gpu) {
+  const full = gpu.model;
+
+  // NVIDIA: extract RTX/GTX number from brackets
+  if (gpu.vendor === 'nvidia') {
+    const m = full.match(/\[(?:GeForce\s+)?(RTX|GTX)\s+(\d+)/i);
+    if (m) {
+      return `${m[1].toUpperCase()} ${m[2]}`;
+    }
+    // fallback
+    return 'NVIDIA GPU';
+  }
+
+  // Intel: strip bracketed suffix, keep platform
+  if (gpu.vendor === 'intel') {
+    return full
+      .replace(/^Intel Corporation\s+/i, '')
+      .replace(/\s*\[.*?\]\s*/g, '')
+      .trim();
+  }
+
+  return full;
+}
+
+async function initMqtt() {
+  // 1) Load config (no cache – must be authoritative)
+//   const res = await fetch('/api/config', { cache: 'no-store' });
+//   const config = await res.json();
+
+  mqttConfig = config.modules?.mqtt;
+  sdlConfig  = config.modules?.['sdl-mgr'];
+//   console.log('config:', JSON.stringify(config.modules, null, 2));
+//   console.log('MQTT config:', JSON.stringify(mqttConfig, null, 2));
+//   console.log('SDL config:', JSON.stringify(sdlConfig, null, 2));
+
+  // 2) Hard requirement: embedded MQTT must be enabled
+  if (!mqttConfig) {
+    throw new Error('MQTT module not defined in config');
+  }
+
+  if (mqttConfig.enabled !== true) {
+    throw new Error('MQTT module is disabled; dashboard requires MQTT');
+  }
+
+  if (!mqttConfig.ws_port) {
+    throw new Error('MQTT ws_port not configured');
+  }
+
+  if (!mqttConfig.topics?.['sdl-web']?.sub?.['sdl_cluster-status']) {
+    throw new Error('MQTT topic sdl_status not configured');
+  }
+
+//   console.log('MQTT config:', JSON.stringify(mqttConfig, null, 2));
+//   console.log('SDL config:', JSON.stringify(sdlConfig, null, 2));
+
+  // 3) Derive broker WS URL from page origin
+  const wsProto =
+    window.location.protocol === 'https:' ? 'wss' : 'ws';
+
+  const wsHost = window.location.hostname;
+  // const wsHost =
+  //   mqttConfig.ws_host
+  //   ?? config.host.ips.find(ip => ip !== '127.0.0.1')
+  //   ?? window.location.hostname;
+
+  const wsPort = mqttConfig.ws_port;
+
+  const wsUrl = `${wsProto}://${wsHost}:${wsPort}`;
+
+  console.log('Connecting to embedded MQTT broker:', wsUrl);
+
+  // 4) Connect (IMPORTANT: force path '/')
+  mqttClient = mqtt.connect(wsUrl, {
+    path: '/',
+    reconnectPeriod: 2000,
+    connectTimeout: 5000
+  });
+
+  // 5) Register handlers
+  mqttClient.on('connect', () => {
+    console.log('MQTT connected (dashboard)');
+
+    const topic = mqttConfig.topics['sdl-web'].sub['sdl_cluster-status'];
+    console.log('Subscribing to:', topic);
+
+    mqttClient.subscribe(topic, { qos: 1 }, err => {
+      if (err) {
+        console.error('MQTT subscribe error:', err);
+      } else {
+        console.log('Subscribed to', topic);
+      }
+    });
+
+    startStatusAgeMonitor();
+
+  });
+
+  mqttClient.on('message', (topic, payload, packet) => {
+    try {
+      const text = new TextDecoder().decode(payload);
+      const msg = JSON.parse(text);
+
+      console.log(
+        'MQTT RX:',
+        topic,
+        msg,
+        packet.retain ? 'retained' : 'live'
+      );
+
+      if (msg.type === 'cluster-status') {
+        lastSdlStatus = msg;
+        lastSdlTimestamp = Date.parse(msg.ts);
+        renderModulesTable(msg);
+      }
+
+    } catch (e) {
+      console.warn(
+        'MQTT parse error:',
+        e,
+        payload
+      );
+    }
+  });
+
+  mqttClient.on('error', err => {
+    console.error('MQTT error:', err);
+  });
+
+  mqttClient.on('close', () => {
+    console.warn('MQTT connection closed');
+  });
+
+  mqttClient.on('reconnect', () => {
+    console.warn('MQTT reconnecting...');
+  });
+}
+
+
+function renderModulesTable(msg) {
+  // console.log('renderModulesTable()');
+  // console.log(JSON.stringify(msg, null, 2));
+
+  let sdl_html = '<h5>Cluster Info</h5>';
+  sdl_html += '<table class="table table-sm table-striped">';
+  sdl_html += `<tbody> `;
+
+  sdl_html += `
+      <tr>
+        <th>SDL Version</th>
+        <td class="text-success" style="font-size:1em">v${msg.msg.sdl.version}</td>
+      </tr>
+    `;
+  sdl_html += `
+      <tr>
+        <th>Uptime (d.h.m.s)</th>
+        <td class="text-success" style=" font-size:0.8em">${msg.msg.sdl.uptime}</td>
+      </tr>
+    `;
+
+  sdl_html += `
+      <tr>
+        <th>Cluster ID</th>
+        <td class="text-success" style=" font-size:1em">${msg.msg.cluster.id}</td>
+      </tr>
+    `;
+
+  sdl_html += `
+      <tr>
+        <th>Cluster Name</th>
+        <td class="text-success" style=" font-size:1em">${msg.msg.cluster.name}</td>
+      </tr>
+    `;
+
+  sdl_html += `
+      <tr>
+        <th>Cluster Desc</th>
+        <td class="text-success" style=" font-size:0.8em">${msg.msg.cluster.desc}</td>
+      </tr>
+    `;
+
+
+  sdl_html += `
+      </tbody>
+    </table>
+  `;
+  document.getElementById('dash-sdl-info').innerHTML = sdl_html;
+
+
+
+  const modules = msg.msg.modules;
+  let html = '<h5>Service Modules</h5>';
+  html += '<table class="table table-sm table-striped">';
+    //   <thead>
+    //     <tr>
+    //       <th>Module</th>
+    //       <th>Status</th>
+    //     </tr>
+    //   </thead>
+  html += `<tbody> `;
+
+  for (const [name, info] of Object.entries(modules)) {
+    const ok = info.enabled === true;
+    const icon = ok
+      ? '<i class="fa-solid fa-circle-check text-success"></i>'
+      : '<i class="fa-solid fa-circle-xmark text-danger"></i>';
+
+    html += `
+      <tr>
+        <th${name}</th>
+        <td>${icon}</td>
+      </tr>
+    `;
+  }
+
+  html += `
+      </tbody>
+    </table>
+  `;
+
+  document.getElementById('dash-modules-list').innerHTML = html;
+}
+
+
+function startStatusAgeMonitor() {
+  if (!sdlConfig?.update_interval.cluster_status) return;
+
+  const maxAgeMs =
+    sdlConfig.update_interval.cluster_status + STALE_GRACE_MS;
+
+  if (statusCheckTimer) {
+    clearInterval(statusCheckTimer);
+  }
+
+  statusCheckTimer = setInterval(() => {
+    if (!lastSdlTimestamp) return;
+
+    const ageMs = Date.now() - lastSdlTimestamp;
+
+    const ageEl = document.getElementById('dash-modules-age');
+
+    if (ageMs > maxAgeMs) {
+      ageEl.innerHTML =
+        `<span class="text-danger">
+           <i class="fa-solid fa-triangle-exclamation"></i>
+           SDL status stale (${Math.round(ageMs / 1000)}s)
+         </span>`;
+
+      markAllModulesDown();
+    } else {
+      ageEl.innerHTML =
+        `<span class="text-success">
+           <i class="fa-solid fa-circle-check"></i>
+           SDL online (${Math.round(ageMs / 1000)}s ago)
+         </span>`;
+    }
+  }, 1000);
+}
+
+
+function markAllModulesDown() {
+  if (!lastSdlStatus?.modules) return;
+
+  const downModules = {};
+  downModules.msg = {}
+
+  for (const name of Object.keys(lastSdlStatus.modules)) {
+    downModules.msg[name] = { enabled: false };
+  }
+
+  renderModulesTable(downModules);
+}
+
+
