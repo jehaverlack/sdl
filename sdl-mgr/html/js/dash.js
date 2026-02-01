@@ -13,7 +13,7 @@ let lastSdlStatus = null;
 let lastSdlTimestamp = null;
 let statusCheckTimer = null;
 const STALE_GRACE_MS = 2000;
-
+let lastWorkers = null;
 
 // -------------------------------
 // GPU Summary (for dashboard)
@@ -201,22 +201,32 @@ async function initMqtt() {
   });
 
   // 5) Register handlers
-  mqttClient.on('connect', () => {
+    mqttClient.on('connect', () => {
     console.log('MQTT connected (dashboard)');
 
-    const topic = mqttConfig.topics['sdl-web'].sub['sdl_cluster-status'];
-    console.log('Subscribing to:', topic);
+    const statusTopic = mqttConfig.topics['sdl-web'].sub['sdl_cluster-status'];
+    const workersTopic = mqttConfig.topics['sdl-web'].sub['sdl_cluster-workers'];
+    
+    console.log('Subscribing to:', statusTopic);
+    console.log('Subscribing to:', workersTopic);
 
-    mqttClient.subscribe(topic, { qos: 1 }, err => {
+    mqttClient.subscribe(statusTopic, { qos: 1 }, err => {
       if (err) {
-        console.error('MQTT subscribe error:', err);
+        console.error('MQTT subscribe error (status):', err);
       } else {
-        console.log('Subscribed to', topic);
+        console.log('Subscribed to', statusTopic);
+      }
+    });
+
+    mqttClient.subscribe(workersTopic, { qos: 1 }, err => {
+      if (err) {
+        console.error('MQTT subscribe error (workers):', err);
+      } else {
+        console.log('Subscribed to', workersTopic);
       }
     });
 
     startStatusAgeMonitor();
-
   });
 
   mqttClient.on('message', (topic, payload, packet) => {
@@ -235,6 +245,9 @@ async function initMqtt() {
         lastSdlStatus = msg;
         lastSdlTimestamp = Date.parse(msg.ts);
         renderModulesTable(msg);
+      } else if (msg.type === 'cluster-workers') {
+        lastWorkers = msg;
+        renderWorkersTable(msg);
       }
 
     } catch (e) {
@@ -472,3 +485,73 @@ function markAllModulesDown() {
 }
 
 
+function renderWorkersTable(msg) {
+  const workers = msg.msg?.workers || {};
+  const workerCount = Object.keys(workers).length;
+
+  let html = `<h5>Workers (${workerCount})</h5>`;
+  
+  if (workerCount === 0) {
+    html += '<p class="text-muted">No workers connected</p>';
+    document.getElementById('dash-sdl-wkrs').innerHTML = html;
+    return;
+  }
+
+  html += '<table class="table table-sm table-striped table-hover">';
+  html += '<thead>';
+  html += '<tr>';
+  html += '<th>Hostname</th>';
+  html += '<th>Status</th>';
+  html += '<th><i class="fa fa-microchip"></i> CPU</th>';
+  html += '<th><i class="fa fa-memory"></i> RAM</th>';
+  html += '<th><i class="fa fa-dice-d20"></i> GPU</th>';
+  html += '<th>Platform</th>';
+  html += '<th>Last Seen</th>';
+  html += '</tr>';
+  html += '</thead>';
+  html += '<tbody>';
+
+  for (const [sdl_id, worker] of Object.entries(workers)) {
+    const status = worker.status === 'active'
+      ? '<span class="badge bg-success">Active</span>'
+      : '<span class="badge bg-secondary">Inactive</span>';
+
+    const cpuAvail = worker.resources?.cpus?.available || 0;
+    const cpuTotal = worker.resources?.cpus?.allocated || 0;
+    const cpuUsed = worker.resources?.cpus?.used || 0;
+
+    const memAvail = worker.resources?.memory?.available || 0;
+    const memTotal = worker.resources?.memory?.allocated || 0;
+    const memUsed = worker.resources?.memory?.used || 0;
+    
+    // Convert bytes to GB
+    const memAvailGB = Math.round(memAvail / (1024 * 1024 * 1024));
+    const memTotalGB = Math.round(memTotal / (1024 * 1024 * 1024));
+    const memUsedGB = memUsed > 0 ? Math.round(memUsed / (1024 * 1024 * 1024)) : 0;
+
+    const gpuAvail = worker.resources?.gpus?.available || 0;
+    const gpuTotal = worker.resources?.gpus?.allocated || 0;
+    const gpuUsed = worker.resources?.gpus?.used || 0;
+
+    const platform = `${worker.platform || 'unknown'} / ${worker.arch || 'unknown'}`;
+    
+    const lastSeen = worker.last_seen 
+      ? new Date(worker.last_seen).toLocaleString()
+      : 'N/A';
+
+    html += '<tr>';
+    html += `<td><strong>${worker.hostname}</strong><br><small class="text-muted">${worker.sdl_id}</small></td>`;
+    html += `<td>${status}</td>`;
+    html += `<td><span class="dash-val">${cpuAvail}</span> / ${cpuTotal}${cpuUsed > 0 ? `<br><small>(${cpuUsed} used)</small>` : ''}</td>`;
+    html += `<td><span class="dash-val">${memAvailGB}</span> / ${memTotalGB} GB${memUsedGB > 0 ? `<br><small>(${memUsedGB} GB used)</small>` : ''}</td>`;
+    html += `<td><span class="dash-val">${gpuAvail}</span> / ${gpuTotal}${gpuUsed > 0 ? `<br><small>(${gpuUsed} used)</small>` : ''}</td>`;
+    html += `<td><small>${platform}</small></td>`;
+    html += `<td><small>${lastSeen}</small></td>`;
+    html += '</tr>';
+  }
+
+  html += '</tbody>';
+  html += '</table>';
+
+  document.getElementById('dash-sdl-wkrs').innerHTML = html;
+}
