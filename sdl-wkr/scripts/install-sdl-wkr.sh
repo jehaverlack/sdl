@@ -83,8 +83,6 @@ install_nodejs() {
     NODE_DIR="${SDL_HOME}/nodejs"
     NODE_VER_BASE="node-${NODE_VER}-${OS_PLATFORM}-${OS_ARCH}"
     NODE_FILE="node-${NODE_VER}-${OS_PLATFORM}-${OS_ARCH}.${EXT}"
-    # NODE_VER_BASE="node-${NODE_VER}-${NODE_PLATFORM}-${OS_ARCH}"
-    # NODE_FILE="${NODE_VER_BASE}.${EXT}"
     NODE_URL="http://${SDL_MGR_IP}:8081/dist/${NODE_FILE}"
 
     
@@ -129,7 +127,7 @@ for cmd in awk curl grep jq sed sha256sum tar unzip; do
   command -v "$cmd" >/dev/null || {
     echo "ERROR: $cmd is required"
     echo "Please install:"
-    echo "   sudo apt -y install gawk coreutils curl jq grep sed sha256sum tar unzip"
+    echo "   sudo apt -y install gawk coreutils curl jq grep sed tar unzip"
     exit 1
   }
 done
@@ -142,7 +140,9 @@ fi
 
 SDL_MGR_IP=$1
 
-SDL_HOME=$(curl -s http://${SDL_MGR_IP}:8081/api/config | jq -r '.dirs.sdlhome')
+# SDL_HOME=$(curl -s http://${SDL_MGR_IP}:8081/api/config | jq -r '.dirs.sdlhome')
+SDL_HOME=$HOME/.sdl
+
 
 SDL_VER=$(curl -s http://${SDL_MGR_IP}:8081/api/config | jq -r '.package.version')
 SDL_DESC=$(curl -s http://${SDL_MGR_IP}:8081/api/config | jq -r '.package.description')
