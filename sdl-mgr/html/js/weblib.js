@@ -521,13 +521,13 @@ function loadFooter() {
     .then(res => res.json())
     .then(config => {
       let html = '';
-      html += '<footer class="bg-light text-center text-muted py-4">\n';
+      html += '<footer class="text-center text-muted py-4">\n';
       html += '<div class="row">\n';
 
       html += '<div class="col-2"></div>';      
 
       html += '<div class="col-4">\n';
-      html += `  <a href="${config.package.homepage}" target="_blank" class="text-dark">\n`;
+      html += `  <a href="${config.package.homepage}" target="_blank" class="">\n`;
       html += '    <i class="fas fa-square-binary"></i> ' + config.package.description + '\n';
       html += '  </a><br>\n';
       html += '</div>\n';
@@ -535,7 +535,7 @@ function loadFooter() {
       // Add GitHub link from config.package.homepage
       html += '<div class="col-4">\n';
       if (config.package.repository.url) {
-        html += `  <a href="${config.package.repository.url}" target="_blank" class="text-dark">\n`;
+        html += `  <a href="${config.package.repository.url}" target="_blank" class="">\n`;
         html += '    <i class="fab fa-github fa-lg me-1"></i> ' + config.package.repository.url + '\n';
         html += '  </a><br>\n';
       }
@@ -553,7 +553,7 @@ function loadFooter() {
       html += '</div>';
 
       html += '<div class="col-3">';
-      html += `Copyright &copy; <span class="text-dark">${config.package.copyright || ''}</span>`;
+      html += `Copyright &copy; <span class="">${config.package.copyright || ''}</span>`;
       html += '</div>';
 
       // Add license if present
@@ -573,7 +573,7 @@ function loadFooter() {
     })
     .catch(err => {
       console.error('Error loading config:', err);
-      document.getElementById('footer').innerHTML = '<footer class="bg-light text-center text-muted py-4">Footer could not be loaded</footer>';
+      document.getElementById('footer').innerHTML = '<footer class="text-center text-muted py-4">Footer could not be loaded</footer>';
     });
 }
 

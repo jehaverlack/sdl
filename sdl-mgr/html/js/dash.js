@@ -302,6 +302,26 @@ function renderModulesTable(msg) {
       </tr>
     `;
 
+  sdl_html += `
+      <tr>
+        <th><span class="fa fa-microchip" title="CPU Cores" style="font-size:1.2em"></span> CPU</th>
+        <td class="text-success" style=" font-size:1em"></td>
+      </tr>
+    `;
+
+  sdl_html += `
+      <tr>
+        <th><span class="fa fa-memory" title="RAM" style="font-size:1.2em"></span> RAM</th>
+        <td class="text-success" style=" font-size:1em"></td>
+      </tr>
+    `;
+
+  sdl_html += `
+      <tr>
+        <th><span class="fa fa-dice-d20" title="GPU" style="font-size:1.2em"></span> GPU</th>
+        <td class="text-success" style=" font-size:1em"></td>
+      </tr>
+    `;
 
   sdl_html += `
       </tbody>
