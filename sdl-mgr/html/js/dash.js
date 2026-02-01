@@ -77,7 +77,7 @@ for (let intf in config.host.network) {
 } 
 
 
-let host_html = '<h5>SDL Manager Host</h5>\n';
+let host_html = '<h5>Manager</h5>\n';
 host_html += '<table class="table table-sm table-striped">\n';
 // host_html += '<thead>\n';
 // host_html += '<tr>\n';
@@ -264,7 +264,7 @@ function renderModulesTable(msg) {
   // console.log('renderModulesTable()');
   // console.log(JSON.stringify(msg, null, 2));
 
-  let sdl_html = '<h5>Cluster Info</h5>';
+  let sdl_html = '<h5>Cluster</h5>';
   sdl_html += '<table class="table table-sm table-striped">';
   sdl_html += `<tbody> `;
 
@@ -277,28 +277,28 @@ function renderModulesTable(msg) {
 
   sdl_html += `
       <tr>
-        <th>Uptime (d.h.m.s)</th>
+        <th>Uptime (d:h:m:s)</th>
         <td class="dash-val" style=" font-size:0.8em">${msg.msg.sdl.uptime}</td>
       </tr>
     `;
 
-  sdl_html += `
-      <tr>
-        <th>Cluster ID</th>
-        <td class="dash-val" style=" font-size:1em">${msg.msg.cluster.id}</td>
-      </tr>
-    `;
+  // sdl_html += `
+  //     <tr>
+  //       <th>Cluster ID</th>
+  //       <td class="dash-val" style=" font-size:1em">${msg.msg.cluster.id}</td>
+  //     </tr>
+  //   `;
 
   sdl_html += `
       <tr>
-        <th>Cluster Name</th>
+        <th>Name</th>
         <td class="dash-val" style=" font-size:1em">${msg.msg.cluster.name}</td>
       </tr>
     `;
 
   sdl_html += `
       <tr>
-        <th>Cluster Desc</th>
+        <th>Description</th>
         <td class="dash-val" style=" font-size:0.8em">${msg.msg.cluster.desc}</td>
       </tr>
     `;
@@ -307,12 +307,20 @@ function renderModulesTable(msg) {
   const workers = msg.msg.workers || { allocated: 0, available: 0, used: 0 };
   sdl_html += `
       <tr>
-        <th>SDL Workers (active/total)</th>
+        <th>SDL Workers</th>
         <td class="dash-val" style="font-size:1em">
-          <span class="dash-val">${workers.available}</span> / ${workers.allocated}
+          <span class="dash-val">${workers.available}</span>
         </td>
       </tr>
     `;
+  // sdl_html += `
+  //     <tr>
+  //       <th>SDL Workers (active/total)</th>
+  //       <td class="dash-val" style="font-size:1em">
+  //         <span class="dash-val">${workers.available}</span> / ${workers.allocated}
+  //       </td>
+  //     </tr>
+  //   `;
 
   // CPU resources
   const cpus = msg.msg.resources?.cpus || { allocated: 0, available: 0, used: 0 };
@@ -320,40 +328,64 @@ function renderModulesTable(msg) {
       <tr>
         <th><span class="fa fa-microchip" title="CPU Cores" style="font-size:1.2em"></span> CPU Cores</th>
         <td class="dash-val" style="font-size:1em">
-          <span class="dash-val">${cpus.available}</span> / ${cpus.allocated}
-          ${cpus.used > 0 ? `<span style="font-size:0.8em">(${cpus.used} in use)</span>` : ''}
+          <span class="dash-val">${cpus.available}</span>
         </td>
       </tr>
     `;
+  // sdl_html += `
+  //     <tr>
+  //       <th><span class="fa fa-microchip" title="CPU Cores" style="font-size:1.2em"></span> CPU Cores</th>
+  //       <td class="dash-val" style="font-size:1em">
+  //         <span class="dash-val">${cpus.available}</span> / ${cpus.allocated}
+  //         ${cpus.used > 0 ? `<span style="font-size:0.8em">(${cpus.used} in use)</span>` : ''}
+  //       </td>
+  //     </tr>
+  //   `;
 
   // Memory resources
   const memory = msg.msg.resources?.memory || { allocated: 0, available: 0, used: 0 };
-  const memAllocGB = (memory.allocated / 1024).toFixed(1);
-  const memAvailGB = (memory.available / 1024).toFixed(1);
-  const memUsedGB = memory.used > 0 ? (memory.used / 1024).toFixed(1) : 0;
+  const memAllocGB = Math.round(memory.allocated / (1024 * 1024 * 1024));
+  const memAvailGB = Math.round(memory.available / (1024 * 1024 * 1024));
+  const memUsedGB = memory.used > 0 ? Math.round(memory.used / 1024) : 0;
   
   sdl_html += `
-      <tr>
-        <th><span class="fa fa-memory" title="RAM" style="font-size:1.2em"></span> RAM</th>
-        <td class="dash-val" style="font-size:1em">
-          <span class="dash-val">${memAvailGB}</span> / ${memAllocGB} GB
-          ${memUsedGB > 0 ? `<span style="font-size:0.8em">(${memUsedGB} GB in use)</span>` : ''}
-        </td>
-      </tr>
-    `;
+    <tr>
+      <th><span class="fa fa-memory" title="RAM" style="font-size:1.2em"></span> RAM</th>
+      <td class="dash-val" style="font-size:1em">
+        <span class="dash-val">${memAvailGB}</span> GB
+      </td>
+    </tr>
+  `;
+  // sdl_html += `
+  //     <tr>
+  //       <th><span class="fa fa-memory" title="RAM" style="font-size:1.2em"></span> RAM (GB)</th>
+  //       <td class="dash-val" style="font-size:1em">
+  //         <span class="dash-val">${memAvailGB}</span> / ${memAllocGB} GB
+  //         ${memUsedGB > 0 ? `<span style="font-size:0.8em">(${memUsedGB} GB in use)</span>` : ''}
+  //       </td>
+  //     </tr>
+  //   `;
 
   // GPU resources
   const gpus = msg.msg.resources?.gpus || { allocated: 0, available: 0, used: 0 };
   sdl_html += `
       <tr>
-        <th><span class="fa fa-dice-d20" title="GPU" style="font-size:1.2em"></span> GPU</th>
+        <th><span class="fa fa-dice-d20" title="GPU" style="font-size:1.2em"></span> GPU (VRAM)</th>
         <td class="dash-val" style="font-size:1em">
-          <span class="dash-val">${gpus.available}</span> / ${gpus.allocated}
-          ${gpus.used > 0 ? `<span style="font-size:0.8em">(${gpus.used} in use)</span>` : ''}
+          <span class="dash-val">${gpus.available}</span>
         </td>
       </tr>
     `;
-
+  // sdl_html += `
+  //     <tr>
+  //       <th><span class="fa fa-dice-d20" title="GPU" style="font-size:1.2em"></span> GPU</th>
+  //       <td class="dash-val" style="font-size:1em">
+  //         <span class="dash-val">${gpus.available}</span> / ${gpus.allocated}
+  //         ${gpus.used > 0 ? `<span style="font-size:0.8em">(${gpus.used} in use)</span>` : ''}
+  //       </td>
+  //     </tr>
+  //   `;
+    
   sdl_html += `
       </tbody>
     </table>

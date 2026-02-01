@@ -8,6 +8,6 @@
       <div id="dash-modules-age"></div>
     </div>
     <div class="col-8" id="dash-sdl-wkrs">
-      <h5>SDL Workers</h5>
+      <h5>Workers</h5>
     </div>
 </div>
