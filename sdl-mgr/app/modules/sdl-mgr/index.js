@@ -191,7 +191,8 @@ function startUdpBeacon() {
               host: addr.address,
               port: config.modules.web.port,
               api_config: '/api/config',
-              config_url: `http://${addr.address}:${config.modules.web.port}/api/config` 
+              config_url: `http://${addr.address}:${config.modules.web.port}/api/config`,
+              web_ui_url: `http://${addr.address}:${config.modules.web.port}`, 
             },
             sdl_wkr_install_cmd: {
               curl: `curl -s http://${addr.address}:${config.modules.web.port}/dist/install-sdl-wkr.sh | bash -s ${addr.address}`,

@@ -1,3 +1,4 @@
+// Node Web App (NWA) Library Module
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
@@ -6,11 +7,15 @@ import { hideBin } from 'yargs/helpers';
 import { fileURLToPath } from 'url';
 import crypto from 'crypto';
 import { execFileSync } from 'child_process';
+import { get } from 'http';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // console.log("DEBUG: __dirname: " + __dirname);
+
+// Process start time (set once per Node.js process)
+const PROCESS_START_TS = Date.now();
 
 const config = load_config();
 
@@ -572,4 +577,26 @@ function pciShortId(id) {
   return m ? m[1].toLowerCase() : null;
 }
 
-export { load_config, log, ipToInt, intToIp, computeBroadcast };
+function getProcessStartTs() {
+  return PROCESS_START_TS;
+}
+
+function getUptimeMs() {
+  return Date.now() - PROCESS_START_TS;
+}
+
+function getUptimeSec() {
+  return Math.floor((Date.now() - PROCESS_START_TS) / 1000);
+}
+
+function getUptimeDHMS() {
+  const uptimeSec = getUptimeSec();
+  const d = Math.floor(uptimeSec / 86400);
+  const h = Math.floor((uptimeSec % 86400) / 3600);
+  const m = Math.floor((uptimeSec % 3600) / 60);
+  const s = Math.floor(uptimeSec % 60);
+  return `${d}.${h}.${m}.${s}`;
+}
+
+
+export { load_config, log, ipToInt, intToIp, computeBroadcast, getProcessStartTs, getUptimeMs, getUptimeSec, getUptimeDHMS };
