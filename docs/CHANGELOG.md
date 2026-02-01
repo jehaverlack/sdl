@@ -6,10 +6,14 @@
 | **Copyright** | 2026 John Haverlack |
 | **License** | MIT |
 | **Version** | 0.3.5 |
-| **Date** | 2026-01-31 |
+| **Date** | 2026-02-01 |
 
-## v0.3.5 - 2026-01-31 (ALPHA)
+## v0.3.5 - 2026-02-01 (ALPHA)
 
+**Summary**
+Light/Dark Mode, Wkr Install, Cluster Stats
+
+- v0.3.5
 - Fixing sdl-wkr install script
 - Start v0.3.5
 
