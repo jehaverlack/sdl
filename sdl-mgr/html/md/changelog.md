@@ -5,11 +5,17 @@
 | **Author** | John Haverlack |
 | **Copyright** | 2026 John Haverlack |
 | **License** | MIT |
-| **Version** | 0.3.3 |
+| **Version** | 0.3.4 |
 | **Date** | 2026-01-31 |
+
+## v0.3.4 - 2026-01-31 (ALPHA)
+
+- Working sdl-wkr self update
+- Start v0.3.4
 
 ## v0.3.3 - 2026-01-31 (ALPHA)
 
+- WIP: sdl-wkr updates
 - WIP: sdl-wkr updates
 - Start v0.3.3
 

@@ -1,6 +1,13 @@
 {
   "releases": [
     {
+      "version": "0.3.4",
+      "date": "2026-01-31",
+      "maturity": "ALPHA",
+      "summary": "",
+      "notes": ""
+    },
+    {
       "version": "0.3.3",
       "date": "2026-01-31",
       "maturity": "ALPHA",
