@@ -3,6 +3,8 @@ import { load_config, log } from '../nwa-lib/index.js';
 import dgram from 'dgram';
 import mqtt from 'mqtt';
 import os from 'os';
+import { exec } from 'child_process';
+
 
 const config = load_config();
 
@@ -12,8 +14,10 @@ log(`Loaded module: ${module}`);
 // Worker state
 // -------------------------------
 let joined = false;
+let authorized = false;
 let mqttClient = null;
 let clusterConfig = null;
+let updating = false;
 
 // -------------------------------
 // Start UDP discovery
@@ -172,13 +176,23 @@ function joinCluster(mqttInfo, cluster) {
 // Handle MQTT messages
 // -------------------------------
 function handleMqttMessage(topic, message) {
+
   try {
     const payload = JSON.parse(message.toString());
     const mqttTopics = clusterConfig.modules.mqtt.topics[module];
     
-    if (topic === mqttTopics.sub['sdl_join-authz']) {
-      handleJoinAuthz(payload);
-    }
+  if (topic === mqttTopics.sub['sdl_join-authz']) {
+    handleJoinAuthz(payload);
+    return;
+  }
+
+  if (
+    authorized &&
+    topic === mqttTopics.sub['sdl_cluster-status']
+  ) {
+    handleClusterStatus(payload);
+  }
+
   } catch (err) {
     log(`${module}: failed to parse MQTT message: ${err}`);
   }
@@ -195,10 +209,62 @@ function handleJoinAuthz(payload) {
 
   if (payload.msg?.authorized === true) {
     log(`${module}: join authorized by cluster`);
+    authorized = true;
+
+    const mqttTopics = clusterConfig.modules.mqtt.topics[module];
+    const statusTopic = mqttTopics.sub['sdl_cluster-status'];
+
+    mqttClient.subscribe(statusTopic, { qos: 1 }, err => {
+      if (err) {
+        log(`${module}: failed to subscribe to ${statusTopic}: ${err}`);
+      } else {
+        log(`${module}: subscribed to ${statusTopic}`);
+      }
+    });
   } else {
     log(`${module}: join denied: ${payload.msg?.reason || 'unknown'}`);
   }
 }
+
+function handleClusterStatus(payload) {
+  const clusterVersion = payload.msg?.sdl?.version;
+  const updateCmd = payload.msg?.sdl?.update_cmd;
+  const localVersion = config.package.version;
+
+  if (!clusterVersion) return;
+
+  if (clusterVersion !== localVersion) {
+    log(
+      `${module}: version mismatch detected (cluster=${clusterVersion}, local=${localVersion})`
+    );
+    triggerWorkerUpdate(clusterVersion, updateCmd);
+  }
+}
+
+
+function triggerWorkerUpdate(targetVersion, updateCmd) {
+  if (updating) return;
+  updating = true;
+
+  log(
+    `${module}: triggering self-update to SDL version ${targetVersion}`
+  );
+
+  // Stop reacting to further control messages
+  authorized = false;
+
+  try {
+    exec(updateCmd, { stdio: 'inherit' });
+  } catch (err) {
+    log(`${module}: failed to exec update command: ${err}`);
+    return;
+  }
+
+  log(`${module}: exiting for self-update`);
+  process.exit(0);
+}
+
+
 
 // -------------------------------
 // Entry point

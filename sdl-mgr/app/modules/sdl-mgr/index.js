@@ -8,6 +8,7 @@ import fs from 'fs';
 import path from 'path';
 
 
+
 const config = load_config();
 
 log(`Loaded module: ${module}`);
@@ -343,6 +344,32 @@ function startSDLStatusPub() {
 }
 
 function publishStatus(client, topic) {
+  //get ip addr
+  const interfaces = os.networkInterfaces();
+  let ip_addr = null;
+
+  for (const [iface, addrs] of Object.entries(interfaces)) {
+    for (const addr of addrs) {
+      // --- FILTERS ---
+
+      // IPv4 only
+      if (addr.family !== 'IPv4') continue;
+
+      // Skip loopback
+      if (addr.internal === true) continue;
+
+      // Skip /32 networks (no broadcast: e.g. Tailscale)
+      const cidr = Number(addr.cidr?.split('/')[1]);
+      if (!Number.isInteger(cidr) || cidr >= 32) continue;
+
+      // Compute broadcast address
+      const broadcastAddr = computeBroadcast(addr.address, addr.netmask);
+      if (!broadcastAddr) continue;
+
+      ip_addr = addr.address
+    }
+  }
+
   const status = {
     ts: new Date().toISOString(),
     sdl_id: config.identity.sdl_id,
@@ -352,7 +379,8 @@ function publishStatus(client, topic) {
     msg: {
       sdl: {
         version: config.package.version,
-        uptime: getUptimeDHMS()
+        uptime: getUptimeDHMS(),
+        update_cmd: `curl -s http://${ip_addr}:${config.modules.web.port}/dist/install-sdl-wkr.sh | bash -s ${ip_addr}`
       },
       cluster: config.cluster,
       modules: Object.fromEntries(

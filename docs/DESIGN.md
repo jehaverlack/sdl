@@ -33,7 +33,7 @@ MVP - Minimum Viable Product Task List
 - [x] Create SDL Worker Install to $SDL_HOME
 - [x] SDL Install Script
 - [ ] Create SDL Worker Auto Update Process
-- [ ] Create Worker Join Process
+- [x] Create Worker Join Process
 - [ ] Create Worker Telementry Process
 - [ ] Data Storage Organizational Structure
 - [ ] MinIO S3 Storage Server
