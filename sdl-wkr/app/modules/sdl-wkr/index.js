@@ -260,8 +260,8 @@ function triggerWorkerUpdate(targetVersion, updateCmd) {
     return;
   }
 
-  log(`${module}: exiting for self-update`);
-  process.exit(0);
+  // log(`${module}: exiting for self-update`);
+  // process.exit(0);
 }
 
 
