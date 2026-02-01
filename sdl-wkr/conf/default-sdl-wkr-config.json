@@ -6,8 +6,7 @@
         "modules": "APP/modules",
         "logs": "SDLHOME/logs",
         "data": "SDLHOME/data",
-        "proj": "DATA/projects",
-        "jobs": "DATA/jobs",
+        "sdl-wkr": "DATA/sdl-wkr",
         "conf": "SDLHOME/conf",
         "modconf": "BASE/conf/modules"
     },

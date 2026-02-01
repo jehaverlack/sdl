@@ -130,12 +130,15 @@ function joinCluster(mqttInfo, cluster) {
       type: 'join-request',
       msg: {
         cluster_id: cluster.id,
-        worker: {
+        "sdl-wkr": {
           sdl_id: config.identity.sdl_id,
           hostname: config.identity.hostname,
-          version: config.package.version,
-          platform: os.platform(),
-          arch: os.arch(),
+          sdl_version: config.package.version,
+          platform: config.host.os.platform,
+          arch: config.host.cpu.arch,
+          distro: config.host.os.pretty_name,
+          distro_name: config.host.os.name,
+          distro_version: config.host.os.version,
           cpus: os.cpus().length,
           totalmem: os.totalmem()
         }

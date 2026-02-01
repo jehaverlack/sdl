@@ -77,6 +77,224 @@ function loadClusterState(config) {
   return JSON.parse(data);
 }
 
+function saveClusterState(config, state) {
+  const clusterDir = config.dirs.clstr;
+  const clusterFile = path.join(clusterDir, 'cluster.json');
+
+  // Update metadata timestamp and uptime
+  state.meta.updated = new Date().toISOString();
+  state.meta.uptime = getUptimeDHMS();
+
+  // Write to disk
+  try {
+    fs.writeFileSync(clusterFile, JSON.stringify(state, null, 2));
+    log(`${module}: cluster state saved to ${clusterFile}`);
+  } catch (err) {
+    log(`${module}: failed to save cluster state: ${err}`);
+    throw err;
+  }
+}
+
+function addWorker(state, workerData) {
+  const sdl_id = workerData.sdl_id;
+
+  // Check if worker already exists
+  const isNewWorker = !state.workers[sdl_id];
+
+  // Add or update worker
+  state.workers[sdl_id] = {
+    sdl_id: workerData.sdl_id,
+    hostname: workerData.hostname,
+    version: workerData.version,
+    platform: workerData.platform,
+    arch: workerData.arch,
+    distro: workerData.distro || "Unknown",
+    distro_name: workerData.distro_name || "Unknown",
+    distro_version: workerData.distro_version || "Unknown",
+    resources: {
+      cpus: {
+        allocated: workerData.cpus || 0,
+        available: workerData.cpus || 0,
+        used: 0
+      },
+      memory: {
+        allocated: workerData.totalmem || 0,
+        available: workerData.totalmem || 0,
+        used: 0
+      },
+      gpus: {
+        allocated: workerData.gpus || 0,
+        available: workerData.gpus || 0,
+        used: 0
+      }
+    },
+    status: 'active',
+    joined_at: isNewWorker ? new Date().toISOString() : state.workers[sdl_id].joined_at,
+    last_seen: new Date().toISOString()
+  };
+
+  return state;
+}
+
+function computeStats(state) {
+  const stats = {
+    workers: {
+      allocated: 0,
+      available: 0,
+      used: 0
+    },
+    resources: {
+      cpus: {
+        allocated: 0,
+        available: 0,
+        used: 0
+      },
+      memory: {
+        allocated: 0,
+        available: 0,
+        used: 0
+      },
+      gpus: {
+        allocated: 0,
+        available: 0,
+        used: 0
+      }
+    }
+  };
+
+  // Count workers and aggregate resources
+  for (const worker of Object.values(state.workers)) {
+    stats.workers.allocated++;
+    
+    if (worker.status === 'active') {
+      stats.workers.available++;
+      
+      stats.resources.cpus.available += worker.resources.cpus.available;
+      stats.resources.memory.available += worker.resources.memory.available;
+      stats.resources.gpus.available += worker.resources.gpus.available;
+    }
+
+    stats.resources.cpus.allocated += worker.resources.cpus.allocated;
+    stats.resources.cpus.used += worker.resources.cpus.used;
+    
+    stats.resources.memory.allocated += worker.resources.memory.allocated;
+    stats.resources.memory.used += worker.resources.memory.used;
+    
+    stats.resources.gpus.allocated += worker.resources.gpus.allocated;
+    stats.resources.gpus.used += worker.resources.gpus.used;
+  }
+
+  state.meta.stats = stats;
+  return state;
+}
+
+//  Worker Join Handler
+function startJoinHandler() {
+  const sdlCfg = config.modules[module];
+  const mqttCfg = config.modules.mqtt;
+
+  if (!sdlCfg?.enabled) {
+    log(`${module}: disabled, not starting join handler`);
+    return;
+  }
+
+  if (!mqttCfg?.enabled) {
+    log(`${module}: MQTT disabled, cannot handle joins`);
+    return;
+  }
+
+  // Load current cluster state
+  let clusterState = loadClusterState(config);
+
+  const joinReqTopic = mqttCfg.topics?.[module]?.sub?.['sdl_join-req'];
+  const joinAuthzTopic = mqttCfg.topics?.[module]?.pub?.['sdl_join-authz'];
+
+  if (!joinReqTopic || !joinAuthzTopic) {
+    log(`${module}: join topics not configured`);
+    return;
+  }
+
+  const mqttUrl = `mqtt://127.0.0.1:${mqttCfg.mqtt_port}`;
+  const client = mqtt.connect(mqttUrl);
+
+  client.on('connect', () => {
+    log(`${module}: join handler connected to MQTT at ${mqttUrl}`);
+
+    client.subscribe(joinReqTopic, { qos: 1 }, err => {
+      if (err) {
+        log(`${module}: failed to subscribe to ${joinReqTopic}: ${err}`);
+      } else {
+        log(`${module}: subscribed to ${joinReqTopic}`);
+      }
+    });
+  });
+
+  client.on('message', (topic, message) => {
+    if (topic !== joinReqTopic) return;
+
+    try {
+      const joinReq = JSON.parse(message.toString());
+      
+      log(`${module}: received join request from ${joinReq.host} (${joinReq.sdl_id})`);
+
+      // Validate version
+      const workerVersion = joinReq.msg?.worker?.version;
+      const clusterVersion = config.package.version;
+      
+      let authorized = false;
+      let reason = null;
+
+      if (workerVersion === clusterVersion) {
+        authorized = true;
+        
+        // Add worker to cluster state
+        clusterState = addWorker(clusterState, joinReq.msg.worker);
+        clusterState = computeStats(clusterState);
+        saveClusterState(config, clusterState);
+        
+        log(`${module}: worker ${joinReq.host} authorized and added to cluster`);
+      } else {
+        authorized = false;
+        reason = 'version_mismatch';
+        log(`${module}: worker ${joinReq.host} denied - version mismatch (worker: ${workerVersion}, cluster: ${clusterVersion})`);
+      }
+
+      // Publish authorization response
+      const authzResponse = {
+        ts: new Date().toISOString(),
+        sdl_id: config.identity.sdl_id,
+        role: 'sdl-mgr',
+        host: config.identity.hostname,
+        type: 'join-authz',
+        msg: {
+          sdl_id: joinReq.sdl_id,
+          authorized: authorized
+        }
+      };
+
+      client.publish(
+        joinAuthzTopic,
+        JSON.stringify(authzResponse),
+        { qos: 1 },
+        err => {
+          if (err) {
+            log(`${module}: failed to publish join authz: ${err}`);
+          } else {
+            log(`${module}: published join authz to ${joinAuthzTopic}`);
+          }
+        }
+      );
+
+    } catch (err) {
+      log(`${module}: failed to process join request: ${err}`);
+    }
+  });
+
+  client.on('error', err => {
+    log(`${module}: join handler MQTT error: ${err}`);
+  });
+}
+
 
 
 function startSDLStatusPub() {
@@ -301,3 +519,4 @@ function startUdpBeacon() {
 startSDLStatusPub();
 startUdpBeacon();
 loadClusterState(config);
+startJoinHandler();

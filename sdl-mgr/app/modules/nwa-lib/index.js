@@ -185,6 +185,10 @@ function load_config() {
 
     };
 
+    config.sdl = {
+        version: config.package.version
+    }
+
     config.identity = {
         sdl_id: null,
         created_at: null,
