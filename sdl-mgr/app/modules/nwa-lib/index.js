@@ -146,6 +146,9 @@ function load_config() {
     config.package = JSON.parse(fs.readFileSync(path.join(config.dirs.app, 'package.json'), 'utf8'));
     config.dependencies = {}
 
+    // SDL Version
+    config.cluster.sdl_version = config.package.version
+
     for (let d in config.package.dependencies) {
         config.dependencies[d] = JSON.parse(fs.readFileSync(path.join(config.dirs.app, 'node_modules', d, 'package.json'), 'utf8'));
     }
@@ -158,6 +161,7 @@ function load_config() {
     ips: [],
 
     os: {
+        platform: null,
         id: null,
         name: null,
         version: null,
@@ -180,6 +184,10 @@ function load_config() {
     network: {}
 
     };
+
+    config.sdl = {
+        version: config.package.version
+    }
 
     config.identity = {
         sdl_id: null,
@@ -217,6 +225,8 @@ function load_config() {
         config.host.cpu.model = cpus[0].model;
         config.host.cpu.cores_logical = cpus.length;
     }
+
+    config.host.os.platform = os.platform();
 
     // -------------------------------
     // OS Info from /etc/os-release (Linux)

@@ -88,6 +88,6 @@ broker.on('publish', (packet, client) => {
     // console.log(
     //   `Publish from ${client.id}: ${packet.topic}`
     // );
-    log(`${module}: Publish from ${client.id}: ${packet.topic}`);
+    // log(`${module}: Publish from ${client.id}: ${packet.topic}`);
   }
 });

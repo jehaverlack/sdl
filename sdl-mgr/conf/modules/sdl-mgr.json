@@ -9,6 +9,7 @@
     },
     "expiration_timeout": {
         "cluster_status": 60000,
-        "cluster_workers": 60000
+        "cluster_workers": 60000,
+        "cluster_telemetry": 60000
     }
 }

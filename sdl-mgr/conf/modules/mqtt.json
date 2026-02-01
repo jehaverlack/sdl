@@ -6,7 +6,7 @@
     "topics":{
         "sdl-mgr":{
             "pub": {
-                "sdl_join-auth": "sdl/join/auth",
+                "sdl_join-authz": "sdl/join/authz",
                 "sdl_cluster-status": "sdl/cluster/status",
                 "sdl_cluster-workers": "sdl/cluster/workers"
             },
@@ -21,7 +21,7 @@
                 "sdl_cluster-telemetry": "sdl/cluster/telemetry"
             },
             "sub": {
-                "sdl_join-auth": "sdl/join/auth",
+                "sdl_join-authz": "sdl/join/authz",
                 "sdl_cluster-status": "sdl/cluster/status"
             }
         },

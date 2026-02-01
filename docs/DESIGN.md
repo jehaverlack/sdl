@@ -5,9 +5,12 @@
 | **Author** | John Haverlack |
 | **Copyright** | 2026 John Haverlack |
 | **License** | MIT |
-| **Version** | 0.3.1 |
+| **Version** | 0.3.2 |
 | **Date** | 2026-01-31 |
 
+## Overview
+
+The Software Defined Laboratory (SDL) project provides a generalized distributed computing platform for managing parallel computational workflows across a cluster of distributed nodes.  SDL is a minimalistic High Performance Compute (HPC) platform focused on extreme minimizaton of technical debt associated configuration, deployability, and maintenance of the cluster.
 
 # Roadmap
 
@@ -26,16 +29,16 @@ MVP - Minimum Viable Product Task List
 - [x] SDL_ID Node ID
 - [x] Version Updater Script
 - [x] Deploy sld-mgr to $SDL_HOME/sdl-mgr
-- [ ] Create Worker Join Process
-- [ ] Create Worker Heartbeat Process
 - [x] Create SDL Worker Dist Build Process
 - [x] Create SDL Worker Install to $SDL_HOME
 - [x] SDL Install Script
+- [ ] Create SDL Worker Auto Update Process
+- [x] Create Worker Join Process
+- [ ] Create Worker Telementry Process
 - [ ] Data Storage Organizational Structure
 - [ ] MinIO S3 Storage Server
-- [ ] Worker Heartbeat Hardware Inventory (CPU, RAM, GPU, etc)
-- [ ] Create SDL Worker Auto Update Process
-- [ ] Worker Heartbeat Load Status (CPU, RAM, GPU, Disk IO, etc)
+- [ ] Worker Telemetry Hardware Inventory (CPU, RAM, GPU, etc)
+- [ ] Worker Telementry Load Status (CPU, RAM, GPU, Disk IO, etc)
 
 # Design
 

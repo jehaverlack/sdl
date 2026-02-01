@@ -49,7 +49,7 @@ git pull origin main
 (Debian, Ubuntu, Linux Mint, Zorin OS, Raspbian)
 
 ```
-sudo apt -y install gawk coreutils curl jq grep sed sha256sum tar unzip netcat-openbsd
+sudo apt -y install gawk coreutils curl jq grep sed tar unzip netcat-openbsd
 ```
 
 #### Installation 

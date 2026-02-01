@@ -5,7 +5,7 @@
 | **Author** | John Haverlack |
 | **Copyright** | 2026 John Haverlack |
 | **License** | MIT |
-| **Version** | 0.3.1 |
+| **Version** | 0.3.2 |
 | **Date** | 2026-01-31 |
 
 ## Overview
@@ -23,7 +23,7 @@ See also: [Installation](docs/INSTALL.md)
 ```
 $ git clone https://github.com/jhaverlack/sdl.git
 $ cd sdl
-$ install-sdl.sh
+$ ./install-sdl.sh
 ```
 
 Point you browser to http://IP-ADDR:8081
