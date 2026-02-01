@@ -10,6 +10,13 @@
 
 ## v0.3.2 - 2026-01-31 (ALPHA)
 
+- v0.3.2
+- Squetching Logs
+- WORKING: join/authz
+- WIP: Join Worker
+- WIP: Join Process
+- sdl-wkr Cluster Join
+- Fixing Service Module Render Bug
 - Start v0.3.2
 
 ## v0.3.1 - 2026-01-31 (ALPHA)
@@ -26,6 +33,9 @@ README Cleanup
 
 **Summary**
 Initial Codebase
+
+**Notes**
+Initial GitHub Release
 
 - Preparing GitHub Version
 - Start v0.3.0
