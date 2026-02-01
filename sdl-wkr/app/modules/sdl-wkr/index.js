@@ -259,9 +259,6 @@ function triggerWorkerUpdate(targetVersion, updateCmd) {
     log(`${module}: failed to exec update command: ${err}`);
     return;
   }
-
-  // log(`${module}: exiting for self-update`);
-  // process.exit(0);
 }
 
 
