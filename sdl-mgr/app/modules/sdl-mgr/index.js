@@ -320,7 +320,6 @@ function startSDLStatusPub() {
       ? sdlCfg.update_interval.cluster_status
       : 10000;
 
-  //  config.modules.mqtt.topics.sdl-mgr.pub.sdl_cluster-status
   const statusTopic = mqttCfg.topics?.[module]?.pub?.['sdl_cluster-status'];
   if (!statusTopic) {
     log(`${module}: ${statusTopic} not configured`);
@@ -344,6 +343,12 @@ function startSDLStatusPub() {
 }
 
 function publishStatus(client, topic) {
+  // Load current cluster state
+  const clusterState = loadClusterState(config);
+  
+  // Recompute stats to get latest resource totals
+  const updatedState = computeStats(clusterState);
+
   //get ip addr
   const interfaces = os.networkInterfaces();
   let ip_addr = null;
@@ -383,6 +388,8 @@ function publishStatus(client, topic) {
         update_cmd: `curl -s http://${ip_addr}:${config.modules.web.port}/dist/install-sdl-wkr.sh | bash -s ${ip_addr}`
       },
       cluster: config.cluster,
+      resources: updatedState.meta.stats.resources,  // ✅ Add cluster resources
+      workers: updatedState.meta.stats.workers,      // ✅ Add worker counts
       modules: Object.fromEntries(
         Object.entries(config.modules).map(([name, mod]) => [
           name,
@@ -401,6 +408,78 @@ function publishStatus(client, topic) {
         log(`${module}: failed to publish status: ${err}`);
       } else {
         // log(`${module}: published status to ${topic}`);
+      }
+    }
+  );
+}
+
+
+// ✅ NEW: Publish individual worker details
+function startWorkersPub() {
+  const sdlCfg = config.modules[module];
+  const mqttCfg = config.modules.mqtt;
+
+  if (!sdlCfg?.enabled) {
+    log(`${module}: disabled, not publishing workers`);
+    return;
+  }
+
+  if (!mqttCfg?.enabled) {
+    log(`${module}: MQTT disabled, cannot publish workers`);
+    return;
+  }
+
+  const workersInterval =
+    Number.isInteger(sdlCfg.update_interval.cluster_workers) &&
+    sdlCfg.update_interval.cluster_workers > 0
+      ? sdlCfg.update_interval.cluster_workers
+      : 10000;
+
+  const workersTopic = mqttCfg.topics?.[module]?.pub?.['sdl_cluster-workers'];
+  if (!workersTopic) {
+    log(`${module}: sdl_cluster-workers topic not configured`);
+    return;
+  }
+
+  const mqttUrl = `mqtt://127.0.0.1:${mqttCfg.mqtt_port}`;
+  const client = mqtt.connect(mqttUrl);
+
+  client.on('connect', () => {
+    log(`${module}: workers publisher connected to MQTT at ${mqttUrl}`);
+
+    publishWorkers(client, workersTopic);
+    setInterval(() => publishWorkers(client, workersTopic), workersInterval);
+  });
+
+  client.on('error', err => {
+    log(`${module}: workers publisher MQTT error: ${err}`);
+  });
+}
+
+function publishWorkers(client, topic) {
+  // Load current cluster state
+  const clusterState = loadClusterState(config);
+
+  const workersMsg = {
+    ts: new Date().toISOString(),
+    sdl_id: config.identity.sdl_id,
+    role: 'sdl-mgr',
+    host: config.identity.hostname,
+    type: 'cluster-workers',
+    msg: {
+      workers: clusterState.workers
+    }
+  };
+
+  client.publish(
+    topic,
+    JSON.stringify(workersMsg),
+    { qos: 1, retain: true },
+    err => {
+      if (err) {
+        log(`${module}: failed to publish workers: ${err}`);
+      } else {
+        // log(`${module}: published workers to ${topic}`);
       }
     }
   );
@@ -547,6 +626,7 @@ function startUdpBeacon() {
 // Entry point (ESM-safe)
 // -------------------------------
 startSDLStatusPub();
+startWorkersPub();  // ✅ Start workers publisher
 startUdpBeacon();
 loadClusterState(config);
 startJoinHandler();

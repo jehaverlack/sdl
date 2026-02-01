@@ -303,24 +303,54 @@ function renderModulesTable(msg) {
       </tr>
     `;
 
+  // Workers stats
+  const workers = msg.msg.workers || { allocated: 0, available: 0, used: 0 };
   sdl_html += `
       <tr>
-        <th><span class="fa fa-microchip" title="CPU Cores" style="font-size:1.2em"></span> CPU</th>
-        <td class="dash-val" style=" font-size:1em"></td>
+        <th>SDL Workers (active/total)</th>
+        <td class="dash-val" style="font-size:1em">
+          <span class="dash-val">${workers.available}</span> / ${workers.allocated}
+        </td>
       </tr>
     `;
 
+  // CPU resources
+  const cpus = msg.msg.resources?.cpus || { allocated: 0, available: 0, used: 0 };
+  sdl_html += `
+      <tr>
+        <th><span class="fa fa-microchip" title="CPU Cores" style="font-size:1.2em"></span> CPU Cores</th>
+        <td class="dash-val" style="font-size:1em">
+          <span class="dash-val">${cpus.available}</span> / ${cpus.allocated}
+          ${cpus.used > 0 ? `<span style="font-size:0.8em">(${cpus.used} in use)</span>` : ''}
+        </td>
+      </tr>
+    `;
+
+  // Memory resources
+  const memory = msg.msg.resources?.memory || { allocated: 0, available: 0, used: 0 };
+  const memAllocGB = (memory.allocated / 1024).toFixed(1);
+  const memAvailGB = (memory.available / 1024).toFixed(1);
+  const memUsedGB = memory.used > 0 ? (memory.used / 1024).toFixed(1) : 0;
+  
   sdl_html += `
       <tr>
         <th><span class="fa fa-memory" title="RAM" style="font-size:1.2em"></span> RAM</th>
-        <td class="dash-val" style=" font-size:1em"></td>
+        <td class="dash-val" style="font-size:1em">
+          <span class="dash-val">${memAvailGB}</span> / ${memAllocGB} GB
+          ${memUsedGB > 0 ? `<span style="font-size:0.8em">(${memUsedGB} GB in use)</span>` : ''}
+        </td>
       </tr>
     `;
 
+  // GPU resources
+  const gpus = msg.msg.resources?.gpus || { allocated: 0, available: 0, used: 0 };
   sdl_html += `
       <tr>
         <th><span class="fa fa-dice-d20" title="GPU" style="font-size:1.2em"></span> GPU</th>
-        <td class="dash-val" style=" font-size:1em"></td>
+        <td class="dash-val" style="font-size:1em">
+          <span class="dash-val">${gpus.available}</span> / ${gpus.allocated}
+          ${gpus.used > 0 ? `<span style="font-size:0.8em">(${gpus.used} in use)</span>` : ''}
+        </td>
       </tr>
     `;
 
