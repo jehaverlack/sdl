@@ -282,7 +282,7 @@ function startJoinHandler() {
           if (err) {
             log(`${module}: failed to publish join authz: ${err}`);
           } else {
-            log(`${module}: published join authz to ${joinAuthzTopic}`);
+            // log(`${module}: published join authz to ${joinAuthzTopic}`);
           }
         }
       );
@@ -372,7 +372,7 @@ function publishStatus(client, topic) {
       if (err) {
         log(`${module}: failed to publish status: ${err}`);
       } else {
-        log(`${module}: published status to ${topic}`);
+        // log(`${module}: published status to ${topic}`);
       }
     }
   );
@@ -412,7 +412,7 @@ function startUdpBeacon() {
     desc: ''
   };
 
-  log(`${module}: DEBUG: cluster: ${JSON.stringify(cluster)}`);
+  log(`${module}: cluster: ${JSON.stringify(cluster)}`);
   
 
   if (!config.host?.network) {
