@@ -32,6 +32,12 @@
           "enabled": true
         },
         {
+          "title": "Settings",
+          "icon": "fa-solid fa-gear",
+          "page": "settings",
+          "enabled": true
+        },
+        {
           "title": "API",
           "icon": "fa-solid fa-code",
           "page": "api",

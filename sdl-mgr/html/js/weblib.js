@@ -832,6 +832,9 @@ export async function getUTCTimestamp() {
 // Load on page load
 // ===============================
 window.addEventListener('DOMContentLoaded', async () => {
+  // Apply saved theme (default to dark)
+  const savedTheme = localStorage.getItem('theme') || 'dark';
+  document.documentElement.setAttribute('data-bs-theme', savedTheme);
 
   const config = await loadConfig();
   // console.log(`DEBUG: ${JSON.stringify(config)}`)
@@ -848,6 +851,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   loadSidePanel();
 
   loadFooter();
+
 
   // Load Markdown content
   const urlParams = new URLSearchParams(window.location.search);

@@ -213,6 +213,17 @@ json-viewer .property:hover {
   color: hwb(0 55% 45%);
 }
 
+/* .dash-val {
+  color: hwb(116 7% 35%);
+} */
+
+[data-bs-theme="light"] .dash-val {
+  color: hwb(116 0% 46%);
+}
+
+[data-bs-theme="dark"] .dash-val {
+  color: hwb(116 40% 0%); /* 40% lighter for dark backgrounds */
+}
 
 /* Dark Theme */
 

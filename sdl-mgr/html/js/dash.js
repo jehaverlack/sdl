@@ -35,7 +35,7 @@ if (Array.isArray(config.host.gpu) && config.host.gpu.length > 0) {
       gpu.memory?.type === 'dedicated' &&
       Number.isFinite(gpu.memory.total_mb)
     ) {
-      memLabel = `(<span class="text-success">${Math.round(gpu.memory.total_mb / 1024)}</span> GB VRAM)`;
+      memLabel = `(<span class="dash-val">${Math.round(gpu.memory.total_mb / 1024)}</span> GB VRAM)`;
     } else if (gpu.memory?.type === 'shared') {
       memLabel = '(shared VRAM)';
     } else {
@@ -54,11 +54,11 @@ if (Array.isArray(config.host.gpu) && config.host.gpu.length > 0) {
 
 // Hostinfo: hostname, cpu, cores, ram, os
 const hostinfo = {
-    "hostname": '<span class="text-success">' + config.host.hostname + '</span>',
-    "sdl_id": '<span class="text-success" style=" font-size:0.7em">' + config.identity.sdl_id + '</span>',
-    "cpu cores": '<span class="text-success">' + config.host.cpu.cores_logical + '</span> <span style="font-size:0.7em">' + config.host.cpu.model + '</span>',
+    "hostname": '<span class="dash-val">' + config.host.hostname + '</span>',
+    "sdl_id": '<span class="dash-val" style=" font-size:0.7em">' + config.identity.sdl_id + '</span>',
+    "cpu cores": '<span class="dash-val">' + config.host.cpu.cores_logical + '</span> <span style="font-size:0.7em">' + config.host.cpu.model + '</span>',
     // "cores": config.host.cpu.cores_logical,
-    "ram": '<span class="text-success">' + config.host.memory.total_gb + '</span> GB ',
+    "ram": '<span class="dash-val">' + config.host.memory.total_gb + '</span> GB ',
     "gpu": gpuSummary,
     "net": "",
     "os": config.host.os.pretty_name
@@ -70,7 +70,7 @@ for (let intf in config.host.network) {
     if (intf != 'lo') {
       for (let addr in config.host.network[intf]) {
         if (config.host.network[intf][addr].family == 'IPv4') {
-          hostinfo["net"] += '<span class="text-success" style=" font-size: 0.8em">' + config.host.network[intf][addr].cidr + '</span><br> ';
+          hostinfo["net"] += '<span class="dash-val" style=" font-size: 0.8em">' + config.host.network[intf][addr].cidr + '</span><br> ';
         }
       }
     }    
@@ -271,55 +271,56 @@ function renderModulesTable(msg) {
   sdl_html += `
       <tr>
         <th>SDL Version</th>
-        <td class="text-success" style="font-size:1em">v${msg.msg.sdl.version}</td>
+        <td class="dash-val" style="font-size:1em">v${msg.msg.sdl.version}</td>
       </tr>
     `;
+
   sdl_html += `
       <tr>
         <th>Uptime (d.h.m.s)</th>
-        <td class="text-success" style=" font-size:0.8em">${msg.msg.sdl.uptime}</td>
+        <td class="dash-val" style=" font-size:0.8em">${msg.msg.sdl.uptime}</td>
       </tr>
     `;
 
   sdl_html += `
       <tr>
         <th>Cluster ID</th>
-        <td class="text-success" style=" font-size:1em">${msg.msg.cluster.id}</td>
+        <td class="dash-val" style=" font-size:1em">${msg.msg.cluster.id}</td>
       </tr>
     `;
 
   sdl_html += `
       <tr>
         <th>Cluster Name</th>
-        <td class="text-success" style=" font-size:1em">${msg.msg.cluster.name}</td>
+        <td class="dash-val" style=" font-size:1em">${msg.msg.cluster.name}</td>
       </tr>
     `;
 
   sdl_html += `
       <tr>
         <th>Cluster Desc</th>
-        <td class="text-success" style=" font-size:0.8em">${msg.msg.cluster.desc}</td>
+        <td class="dash-val" style=" font-size:0.8em">${msg.msg.cluster.desc}</td>
       </tr>
     `;
 
   sdl_html += `
       <tr>
         <th><span class="fa fa-microchip" title="CPU Cores" style="font-size:1.2em"></span> CPU</th>
-        <td class="text-success" style=" font-size:1em"></td>
+        <td class="dash-val" style=" font-size:1em"></td>
       </tr>
     `;
 
   sdl_html += `
       <tr>
         <th><span class="fa fa-memory" title="RAM" style="font-size:1.2em"></span> RAM</th>
-        <td class="text-success" style=" font-size:1em"></td>
+        <td class="dash-val" style=" font-size:1em"></td>
       </tr>
     `;
 
   sdl_html += `
       <tr>
         <th><span class="fa fa-dice-d20" title="GPU" style="font-size:1.2em"></span> GPU</th>
-        <td class="text-success" style=" font-size:1em"></td>
+        <td class="dash-val" style=" font-size:1em"></td>
       </tr>
     `;
 
@@ -339,7 +340,7 @@ function renderModulesTable(msg) {
   for (const [name, info] of Object.entries(modules)) {
     const ok = info.enabled === true;
     const icon = ok
-      ? '<i class="fa-solid fa-circle-check text-success"></i>'
+      ? '<i class="fa-solid fa-circle-check dash-val"></i>'
       : '<i class="fa-solid fa-circle-xmark text-danger"></i>';
 
     html += `
@@ -386,7 +387,7 @@ function startStatusAgeMonitor() {
       markAllModulesDown();
     } else {
       ageEl.innerHTML =
-        `<span class="text-success">
+        `<span class="dash-val">
            <i class="fa-solid fa-circle-check"></i>
            SDL online (${Math.round(ageMs / 1000)}s ago)
          </span>`;
