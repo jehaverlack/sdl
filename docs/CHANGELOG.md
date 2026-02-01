@@ -5,13 +5,22 @@
 | **Author** | John Haverlack |
 | **Copyright** | 2026 John Haverlack |
 | **License** | MIT |
-| **Version** | 0.3.5 |
+| **Version** | 0.3.6 |
 | **Date** | 2026-02-01 |
 
-## v0.3.5 - 2026-02-01 (ALPHA)
+## v0.3.6 - 2026-02-01 (ALPHA)
 
 **Summary**
 Light/Dark Mode, Wkr Install, Cluster Stats
+
+- Start v0.3.6
+- CP Updates
+- Dash: Total Cluster Stats
+- Publishing to cluster/workers
+- Light/Dark Mode Toggle
+- Added light/dark theme CSS
+
+## v0.3.5 - 2026-02-01 (ALPHA)
 
 - v0.3.5
 - Fixing sdl-wkr install script

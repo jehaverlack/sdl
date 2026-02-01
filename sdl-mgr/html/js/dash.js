@@ -44,7 +44,7 @@ if (Array.isArray(config.host.gpu) && config.host.gpu.length > 0) {
 
     return `
       <span
-        style="font-size:0.75em; cursor:help"
+        style="font-size:0.8em; cursor:help"
         title="${fullName}">
         ${displayName} ${memLabel}
       </span>
@@ -55,7 +55,7 @@ if (Array.isArray(config.host.gpu) && config.host.gpu.length > 0) {
 // Hostinfo: hostname, cpu, cores, ram, os
 const hostinfo = {
     "hostname": '<span class="dash-val">' + config.host.hostname + '</span>',
-    "sdl_id": '<span class="dash-val" style=" font-size:0.7em">' + config.identity.sdl_id + '</span>',
+    "sdl_id": '<span class="dash-val" style=" font-size:0.8em">' + config.identity.sdl_id + '</span>',
     "cpu cores": '<span class="dash-val">' + config.host.cpu.cores_logical + '</span> <span style="font-size:0.7em">' + config.host.cpu.model + '</span>',
     // "cores": config.host.cpu.cores_logical,
     "ram": '<span class="dash-val">' + config.host.memory.total_gb + '</span> GB ',
@@ -70,7 +70,7 @@ for (let intf in config.host.network) {
     if (intf != 'lo') {
       for (let addr in config.host.network[intf]) {
         if (config.host.network[intf][addr].family == 'IPv4') {
-          hostinfo["net"] += '<span class="dash-val" style=" font-size: 0.8em">' + config.host.network[intf][addr].cidr + '</span><br> ';
+          hostinfo["net"] += '<span class="dash-val" style=" font-size: 0.9em">' + config.host.network[intf][addr].cidr + '</span><br> ';
         }
       }
     }    
@@ -278,7 +278,7 @@ function renderModulesTable(msg) {
   sdl_html += `
       <tr>
         <th>Uptime (d:h:m:s)</th>
-        <td class="dash-val" style=" font-size:0.8em">${msg.msg.sdl.uptime}</td>
+        <td class="dash-val" style=" font-size:1em">${msg.msg.sdl.uptime}</td>
       </tr>
     `;
 
