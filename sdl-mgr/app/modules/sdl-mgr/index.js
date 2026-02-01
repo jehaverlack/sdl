@@ -105,7 +105,7 @@ function addWorker(state, workerData) {
   state.workers[sdl_id] = {
     sdl_id: workerData.sdl_id,
     hostname: workerData.hostname,
-    version: workerData.version,
+    version: workerData.sdl_version,
     platform: workerData.platform,
     arch: workerData.arch,
     distro: workerData.distro || "Unknown",
@@ -238,7 +238,9 @@ function startJoinHandler() {
       log(`${module}: received join request from ${joinReq.host} (${joinReq.sdl_id})`);
 
       // Validate version
-      const workerVersion = joinReq.msg?.worker?.version;
+      const workerData = joinReq.msg['sdl-wkr'];
+      const workerVersion = workerData?.sdl_version;
+      // const workerVersion = joinReq.msg?.worker?.version;
       const clusterVersion = config.package.version;
       
       let authorized = false;
@@ -248,7 +250,7 @@ function startJoinHandler() {
         authorized = true;
         
         // Add worker to cluster state
-        clusterState = addWorker(clusterState, joinReq.msg.worker);
+        clusterState = addWorker(clusterState, workerData);
         clusterState = computeStats(clusterState);
         saveClusterState(config, clusterState);
         
