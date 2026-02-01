@@ -5,11 +5,17 @@
 | **Author** | John Haverlack |
 | **Copyright** | 2026 John Haverlack |
 | **License** | MIT |
-| **Version** | 0.3.2 |
+| **Version** | 0.3.3 |
 | **Date** | 2026-01-31 |
+
+## v0.3.3 - 2026-01-31 (ALPHA)
+
+- WIP: sdl-wkr updates
+- Start v0.3.3
 
 ## v0.3.2 - 2026-01-31 (ALPHA)
 
+- v0.3.2
 - v0.3.2
 - Squetching Logs
 - WORKING: join/authz
