@@ -12,6 +12,7 @@
         "dist": "SDLHOME/dist",
         "logs": "SDLHOME/logs",
         "data": "SDLHOME/data",
+        "clstr": "DATA/cluster",
         "proj": "DATA/proj",
         "jobs": "DATA/jobs",
         "conf": "SDLHOME/conf",

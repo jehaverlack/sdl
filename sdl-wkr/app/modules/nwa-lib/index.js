@@ -158,6 +158,7 @@ function load_config() {
     ips: [],
 
     os: {
+        platform: null,
         id: null,
         name: null,
         version: null,
@@ -217,6 +218,8 @@ function load_config() {
         config.host.cpu.model = cpus[0].model;
         config.host.cpu.cores_logical = cpus.length;
     }
+
+    config.host.os.platform = os.platform();
 
     // -------------------------------
     // OS Info from /etc/os-release (Linux)

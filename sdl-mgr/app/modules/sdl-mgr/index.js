@@ -1,14 +1,83 @@
 const module = 'sdl-mgr'; // Module Name
 
-import { load_config, log, ipToInt, intToIp, computeBroadcast,  getUptimeDHMS } from '../nwa-lib/index.js';
+import { load_config, log, ipToInt, intToIp, computeBroadcast, getProcessStartTs, getUptimeDHMS } from '../nwa-lib/index.js';
 import mqtt from 'mqtt';
 import os from 'os';
 import dgram from 'dgram';
+import fs from 'fs';
+import path from 'path';
+
 
 const config = load_config();
 
 log(`Loaded module: ${module}`);
 // log(`${module}: Cluster Conf: ${JSON.stringify(config.cluster, null, 2)}`, true);
+// log(`${module}: Dirs: ${JSON.stringify(config.dirs, null, 2)}`, true);
+
+function loadClusterState(config) {
+  const clusterDir = config.dirs.clstr;
+  const clusterFile = path.join(clusterDir, 'cluster.json');
+
+  // Ensure cluster directory exists
+  if (!fs.existsSync(clusterDir)) {
+    fs.mkdirSync(clusterDir, { recursive: true });
+  }
+
+  // If cluster.json doesn't exist, create initial state
+  if (!fs.existsSync(clusterFile)) {
+    const initialState = {
+      meta: {
+        updated: new Date().toISOString(),
+        started_at: new Date(getProcessStartTs()).toISOString(),
+        uptime: getUptimeDHMS(),
+        stats: {
+          workers: {
+            allocated: 0,
+            available: 0,
+            used: 0
+          },
+          resources: {
+            cpus: {
+              allocated: 0,
+              available: 0,
+              used: 0
+            },
+            memory: {
+              allocated: 0,
+              available: 0,
+              used: 0
+            },
+            gpus: {
+              allocated: 0,
+              available: 0,
+              used: 0
+            }
+          }
+        }
+      },
+      cluster: config.cluster,
+      "sdl-mgr": {
+        sdl_id: config.identity.sdl_id,
+        hostname: config.identity.hostname,
+        platform: config.host.os.platform,
+        arch: config.host.cpu.arch,
+        distro: config.host.os.pretty_name,
+        distro_name: config.host.os.name,
+        distro_version: config.host.os.version
+      },
+      workers: {}
+    };
+
+    fs.writeFileSync(clusterFile, JSON.stringify(initialState, null, 2));
+    return initialState;
+  }
+
+  // Load existing cluster state
+  const data = fs.readFileSync(clusterFile, 'utf8');
+  return JSON.parse(data);
+}
+
+
 
 function startSDLStatusPub() {
   const sdlCfg = config.modules[module];
@@ -231,3 +300,4 @@ function startUdpBeacon() {
 // -------------------------------
 startSDLStatusPub();
 startUdpBeacon();
+loadClusterState(config);
