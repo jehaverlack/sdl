@@ -659,30 +659,48 @@ function startTelemetryListener() {  // ✅ Renamed function
     });
   });
 
-  client.on('message', (topic, message) => {
-    if (topic !== telemetryTopic) return;
+client.on('message', (topic, message) => {
+  if (topic !== telemetryTopic) return;
 
-    try {
-      const telemetry = JSON.parse(message.toString());
-      const sdl_id = telemetry.msg.sdl_id;
+  try {
+    const telemetry = JSON.parse(message.toString());
+    const sdl_id = telemetry.msg.sdl_id;
 
-      // Update worker's last_seen timestamp
-      if (clusterState.workers[sdl_id]) {
-        clusterState.workers[sdl_id].last_seen = new Date().toISOString();
-        clusterState.workers[sdl_id].status = 'active';
-        
-        // Update resources if provided
-        if (telemetry.msg.resources) {
-          clusterState.workers[sdl_id].resources = telemetry.msg.resources;
+    // Update worker's last_seen timestamp
+    if (clusterState.workers[sdl_id]) {
+      clusterState.workers[sdl_id].last_seen = new Date().toISOString();
+      clusterState.workers[sdl_id].status = 'active';
+      
+      // ✅ MERGE resources instead of replacing
+      if (telemetry.msg.resources) {
+        // Merge each resource type
+        if (telemetry.msg.resources.cpus) {
+          clusterState.workers[sdl_id].resources.cpus = {
+            ...clusterState.workers[sdl_id].resources.cpus,
+            ...telemetry.msg.resources.cpus
+          };
         }
-
-        clusterState = computeStats(clusterState);
-        saveClusterState(config, clusterState);
+        if (telemetry.msg.resources.memory) {
+          clusterState.workers[sdl_id].resources.memory = {
+            ...clusterState.workers[sdl_id].resources.memory,
+            ...telemetry.msg.resources.memory
+          };
+        }
+        if (telemetry.msg.resources.gpus) {
+          clusterState.workers[sdl_id].resources.gpus = {
+            ...clusterState.workers[sdl_id].resources.gpus,
+            ...telemetry.msg.resources.gpus
+          };
+        }
       }
-    } catch (err) {
-      log(`${module}: failed to process telemetry: ${err}`);
+
+      clusterState = computeStats(clusterState);
+      saveClusterState(config, clusterState);
     }
-  });
+  } catch (err) {
+    log(`${module}: failed to process telemetry: ${err}`);
+  }
+});
 
   client.on('error', err => {
     log(`${module}: telemetry listener MQTT error: ${err}`);

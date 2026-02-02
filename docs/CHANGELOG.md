@@ -5,14 +5,19 @@
 | **Author** | John Haverlack |
 | **Copyright** | 2026 John Haverlack |
 | **License** | MIT |
-| **Version** | 0.3.6 |
+| **Version** | 0.3.7 |
 | **Date** | 2026-02-01 |
+
+## v0.3.7 - 2026-02-01 (ALPHA)
+
+- Start v0.3.7
 
 ## v0.3.6 - 2026-02-01 (ALPHA)
 
 **Summary**
 Light/Dark Mode, Wkr Install, Cluster Stats
 
+- v0.3.6
 - Adding Cluster Telemetry
 - WIP: Worker Display
 - Tweaks
