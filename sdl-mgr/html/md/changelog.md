@@ -13,6 +13,9 @@
 **Summary**
 Light/Dark Mode, Wkr Install, Cluster Stats
 
+- Adding Cluster Telemetry
+- WIP: Worker Display
+- Tweaks
 - Start v0.3.6
 - CP Updates
 - Dash: Total Cluster Stats
