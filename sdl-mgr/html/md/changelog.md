@@ -5,14 +5,19 @@
 | **Author** | John Haverlack |
 | **Copyright** | 2026 John Haverlack |
 | **License** | MIT |
-| **Version** | 0.3.7 |
+| **Version** | 0.3.8 |
 | **Date** | 2026-02-01 |
+
+## v0.3.8 - 2026-02-01 (ALPHA)
+
+- Start v0.3.8
 
 ## v0.3.7 - 2026-02-01 (ALPHA)
 
 **Summary**
 sdl-wkr Telemetry
 
+- v0.3.7
 - Fixing sdl-wkr RAM detection
 - Start v0.3.7
 

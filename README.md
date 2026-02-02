@@ -14,6 +14,9 @@ The Software Defined Laboratory (SDL) project provides a generalized distributed
 
 ## Design
 
+![SDL Dashboard](docs/lib/img/sdl-dash.png)
+![SDL About](docs/lib/img/sdl-about.png)
+
 For more information, see the [Design](docs/DESIGN.md) document.
 
 ## Getting Started
