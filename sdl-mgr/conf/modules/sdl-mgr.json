@@ -1,6 +1,7 @@
 {
     "enabled": true,
     "beacon_udp_port":10101,
+    "worker_stale_threshold": 15000,
     "update_interval": {
         "udp_beacon": 2000,
         "cluster_status": 10000,

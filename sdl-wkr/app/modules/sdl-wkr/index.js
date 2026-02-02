@@ -18,6 +18,7 @@ let authorized = false;
 let mqttClient = null;
 let clusterConfig = null;
 let updating = false;
+let telemetryTimer = null; 
 
 // -------------------------------
 // Start UDP discovery
@@ -144,7 +145,8 @@ function joinCluster(mqttInfo, cluster) {
           distro_name: config.host.os.name,
           distro_version: config.host.os.version,
           cpus: os.cpus().length,
-          totalmem: os.totalmem()
+          totalmem: os.totalmem(),
+          gpus: Array.isArray(config.host.gpu) ? config.host.gpu.length : 0  // ✅ Fixed
         }
       }
     };
@@ -176,22 +178,21 @@ function joinCluster(mqttInfo, cluster) {
 // Handle MQTT messages
 // -------------------------------
 function handleMqttMessage(topic, message) {
-
   try {
     const payload = JSON.parse(message.toString());
     const mqttTopics = clusterConfig.modules.mqtt.topics[module];
     
-  if (topic === mqttTopics.sub['sdl_join-authz']) {
-    handleJoinAuthz(payload);
-    return;
-  }
+    if (topic === mqttTopics.sub['sdl_join-authz']) {
+      handleJoinAuthz(payload);
+      return;
+    }
 
-  if (
-    authorized &&
-    topic === mqttTopics.sub['sdl_cluster-status']
-  ) {
-    handleClusterStatus(payload);
-  }
+    if (
+      authorized &&
+      topic === mqttTopics.sub['sdl_cluster-status']
+    ) {
+      handleClusterStatus(payload);
+    }
 
   } catch (err) {
     log(`${module}: failed to parse MQTT message: ${err}`);
@@ -221,11 +222,17 @@ function handleJoinAuthz(payload) {
         log(`${module}: subscribed to ${statusTopic}`);
       }
     });
+
+    // ✅ Start telemetry after authorization
+    startTelemetry();
   } else {
     log(`${module}: join denied: ${payload.msg?.reason || 'unknown'}`);
   }
 }
 
+// -------------------------------
+// Handle cluster status
+// -------------------------------
 function handleClusterStatus(payload) {
   const clusterVersion = payload.msg?.sdl?.version;
   const updateCmd = payload.msg?.sdl?.update_cmd;
@@ -241,7 +248,9 @@ function handleClusterStatus(payload) {
   }
 }
 
-
+// -------------------------------
+// Trigger worker update
+// -------------------------------
 function triggerWorkerUpdate(targetVersion, updateCmd) {
   if (updating) return;
   updating = true;
@@ -252,6 +261,9 @@ function triggerWorkerUpdate(targetVersion, updateCmd) {
 
   // Stop reacting to further control messages
   authorized = false;
+  
+  // ✅ Stop telemetry during update
+  stopTelemetry();
 
   try {
     exec(updateCmd, { stdio: 'inherit' });
@@ -261,7 +273,93 @@ function triggerWorkerUpdate(targetVersion, updateCmd) {
   }
 }
 
+// -------------------------------
+// ✅ Worker Telemetry
+// -------------------------------
+function startTelemetry() {
+  if (telemetryTimer) {
+    clearInterval(telemetryTimer);
+  }
 
+  const telemetryInterval =
+    Number.isInteger(config.modules[module].update_interval?.worker_telemetry) &&
+    config.modules[module].update_interval.worker_telemetry > 0
+      ? config.modules[module].update_interval.worker_telemetry
+      : 5000;  // Default 5 seconds
+
+  const mqttTopics = clusterConfig.modules.mqtt.topics[module];
+  const telemetryTopic = mqttTopics.pub['sdl_cluster-telemetry'];
+
+  if (!telemetryTopic) {
+    log(`${module}: cluster-telemetry topic not configured`);
+    return;
+  }
+
+  log(`${module}: starting telemetry (interval: ${telemetryInterval}ms)`);
+
+  // Publish immediately
+  publishTelemetry(telemetryTopic);
+
+  // Then publish periodically
+  telemetryTimer = setInterval(() => {
+    publishTelemetry(telemetryTopic);
+  }, telemetryInterval);
+}
+
+function publishTelemetry(topic) {
+  if (!mqttClient || !authorized) return;
+
+  const gpuCount = Array.isArray(config.host.gpu) ? config.host.gpu.length : 0;  // ✅ Fixed
+
+  const telemetry = {
+    ts: new Date().toISOString(),
+    sdl_id: config.identity.sdl_id,
+    role: 'sdl-wkr',
+    host: config.identity.hostname,
+    type: 'worker-telemetry',
+    msg: {
+      sdl_id: config.identity.sdl_id,
+      hostname: config.identity.hostname,
+      status: 'active',
+      resources: {
+        cpus: {
+          allocated: config.host.cpu.cores_logical,
+          available: config.host.cpu.cores_logical,
+          used: 0
+        },
+        memory: {
+          allocated: config.host.memory.total_bytes,
+          available: config.host.memory.total_bytes,
+          used: 0
+        },
+        gpus: {
+          allocated: gpuCount,
+          available: gpuCount,
+          used: 0
+        }
+      }
+    }
+  };
+
+  mqttClient.publish(
+    topic,
+    JSON.stringify(telemetry),
+    { qos: 1 },
+    err => {
+      if (err) {
+        log(`${module}: failed to publish telemetry: ${err}`);
+      }
+    }
+  );
+}
+
+function stopTelemetry() {
+  if (telemetryTimer) {
+    clearInterval(telemetryTimer);
+    telemetryTimer = null;
+    log(`${module}: telemetry stopped`);
+  }
+}
 
 // -------------------------------
 // Entry point

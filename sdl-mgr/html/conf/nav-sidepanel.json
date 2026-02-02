@@ -20,7 +20,7 @@
     "desc": "Workers",
     "icon": "fa-solid fa-server",
     "page": "wkrs",
-    "enabled": true,
+    "enabled": false,
     "items": []
   },
   "proj": {
