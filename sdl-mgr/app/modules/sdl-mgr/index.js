@@ -621,12 +621,121 @@ function startUdpBeacon() {
 }
 
 
+// Update startHeartbeatListener to use telemetry topic
+function startTelemetryListener() {  // ✅ Renamed function
+  const sdlCfg = config.modules[module];
+  const mqttCfg = config.modules.mqtt;
 
-// -------------------------------
-// Entry point (ESM-safe)
-// -------------------------------
+  if (!sdlCfg?.enabled) {
+    log(`${module}: disabled, not listening for telemetry`);
+    return;
+  }
+
+  if (!mqttCfg?.enabled) {
+    log(`${module}: MQTT disabled, cannot listen for telemetry`);
+    return;
+  }
+
+  let clusterState = loadClusterState(config);
+
+  const telemetryTopic = mqttCfg.topics?.[module]?.sub?.['sdl_cluster-telemetry'];  // ✅ Changed
+  if (!telemetryTopic) {
+    log(`${module}: cluster-telemetry topic not configured`);
+    return;
+  }
+
+  const mqttUrl = `mqtt://127.0.0.1:${mqttCfg.mqtt_port}`;
+  const client = mqtt.connect(mqttUrl);
+
+  client.on('connect', () => {
+    log(`${module}: telemetry listener connected to MQTT at ${mqttUrl}`);
+
+    client.subscribe(telemetryTopic, { qos: 1 }, err => {
+      if (err) {
+        log(`${module}: failed to subscribe to ${telemetryTopic}: ${err}`);
+      } else {
+        log(`${module}: subscribed to ${telemetryTopic}`);
+      }
+    });
+  });
+
+  client.on('message', (topic, message) => {
+    if (topic !== telemetryTopic) return;
+
+    try {
+      const telemetry = JSON.parse(message.toString());
+      const sdl_id = telemetry.msg.sdl_id;
+
+      // Update worker's last_seen timestamp
+      if (clusterState.workers[sdl_id]) {
+        clusterState.workers[sdl_id].last_seen = new Date().toISOString();
+        clusterState.workers[sdl_id].status = 'active';
+        
+        // Update resources if provided
+        if (telemetry.msg.resources) {
+          clusterState.workers[sdl_id].resources = telemetry.msg.resources;
+        }
+
+        clusterState = computeStats(clusterState);
+        saveClusterState(config, clusterState);
+      }
+    } catch (err) {
+      log(`${module}: failed to process telemetry: ${err}`);
+    }
+  });
+
+  client.on('error', err => {
+    log(`${module}: telemetry listener MQTT error: ${err}`);
+  });
+}
+
+// Add Stale Worker Detection
+function startStaleWorkerDetection() {
+  const sdlCfg = config.modules[module];
+
+  if (!sdlCfg?.enabled) {
+    log(`${module}: disabled, not starting stale worker detection`);
+    return;
+  }
+
+  const checkInterval = 10000;  // Check every 10 seconds
+  const staleThreshold =
+    Number.isInteger(sdlCfg.worker_stale_threshold) &&
+    sdlCfg.worker_stale_threshold > 0
+      ? sdlCfg.worker_stale_threshold
+      : 30000;  // Default 30 seconds
+
+  setInterval(() => {
+    let clusterState = loadClusterState(config);
+    const now = Date.now();
+    let changed = false;
+
+    for (const [sdl_id, worker] of Object.entries(clusterState.workers)) {
+      const lastSeenMs = Date.parse(worker.last_seen);
+      const ageMs = now - lastSeenMs;
+
+      if (ageMs > staleThreshold && worker.status === 'active') {
+        log(`${module}: worker ${worker.hostname} (${sdl_id}) marked as inactive (last seen ${Math.round(ageMs / 1000)}s ago)`);
+        clusterState.workers[sdl_id].status = 'inactive';
+        changed = true;
+      }
+    }
+
+    if (changed) {
+      clusterState = computeStats(clusterState);
+      saveClusterState(config, clusterState);
+    }
+  }, checkInterval);
+
+  log(`${module}: stale worker detection active (threshold: ${staleThreshold}ms, check interval: ${checkInterval}ms)`);
+}
+
+// Update entry point
 startSDLStatusPub();
-startWorkersPub();  // ✅ Start workers publisher
+startWorkersPub();
+startTelemetryListener(); 
 startUdpBeacon();
 loadClusterState(config);
 startJoinHandler();
+startStaleWorkerDetection();
+
