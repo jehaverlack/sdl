@@ -309,7 +309,12 @@ function startTelemetry() {
 function publishTelemetry(topic) {
   if (!mqttClient || !authorized) return;
 
-  const gpuCount = Array.isArray(config.host.gpu) ? config.host.gpu.length : 0;  // ✅ Fixed
+  const gpuCount = Array.isArray(config.host.gpu) ? config.host.gpu.length : 0;
+  
+  // ✅ Convert GB to bytes
+  const memoryBytes = config.host.memory.total_gb 
+    ? config.host.memory.total_gb * 1024 * 1024 * 1024 
+    : 0;
 
   const telemetry = {
     ts: new Date().toISOString(),
@@ -328,8 +333,8 @@ function publishTelemetry(topic) {
           used: 0
         },
         memory: {
-          allocated: config.host.memory.total_bytes,
-          available: config.host.memory.total_bytes,
+          allocated: memoryBytes,   // ✅ Fixed
+          available: memoryBytes,   // ✅ Fixed
           used: 0
         },
         gpus: {

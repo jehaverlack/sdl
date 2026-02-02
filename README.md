@@ -5,7 +5,7 @@
 | **Author** | John Haverlack |
 | **Copyright** | 2026 John Haverlack |
 | **License** | MIT |
-| **Version** | 0.3.6 |
+| **Version** | 0.3.7 |
 | **Date** | 2026-02-01 |
 
 ## Overview
@@ -44,7 +44,7 @@ sudo ufw allow in proto udp from <NETWORK CIDR> to any port 10101
 Listen to UDP 10101 for beacon messages broadcast by your SDL Manager.
 
 ```
-nc -u 127.0.0.1 10101
+nc -u -l -k 10101 |jq
 ```
 
 > NOTE: CTRL-C to exit `nc`.  You cannot run `nc` on port 10101 in parallel with the sdl-wkr.  So run it once to get the install command.  Tnen install sdl-wkr.

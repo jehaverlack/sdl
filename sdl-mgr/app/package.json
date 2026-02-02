@@ -1,6 +1,6 @@
 {
   "name": "sdl-mgr",
-  "version": "0.3.6",
+  "version": "0.3.7",
   "version_date": "2026-02-01",
   "description": "Software Defined Laboratory: Manager (sdl-mgr)",
   "main": "index.js",
