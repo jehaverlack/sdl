@@ -10,6 +10,10 @@
 
 ## v0.3.7 - 2026-02-01 (ALPHA)
 
+**Summary**
+sdl-wkr Telemetry
+
+- Fixing sdl-wkr RAM detection
 - Start v0.3.7
 
 ## v0.3.6 - 2026-02-01 (ALPHA)
