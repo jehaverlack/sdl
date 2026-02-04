@@ -384,6 +384,15 @@ cd "$SDL_MGR/current/app"
 export PATH="$SDL_NODEJS/current/bin:$PATH"
 $NPM_BIN install
 
+
+# ------------------------------------------------------------
+# Copy Start / Stop Scripts
+# ------------------------------------------------------------
+cp "$SDL_MGR/current/scripts/start-sdl-mgr.sh" "$SDL_HOME/scripts/"
+cp "$SDL_MGR/current/scripts/stop-sdl-mgr.sh" "$SDL_HOME/scripts/"
+cp "$SDL_MGR/current/scripts/status-sdl-mgr.sh" "$SDL_HOME/scripts/"
+
+
 # ------------------------------------------------------------
 # Install Systemd Unit Files
 # Copy SDL_MGR/current/scripts/sdl-mgr.service to ~/.config/systemd/user
@@ -394,6 +403,14 @@ echo "Installing SystemD Unit Files"
 mkdir -p ~/.config/systemd/user
 cp "$SDL_MGR/current/scripts/sdl-mgr.service" ~/.config/systemd/user/
 
+
+
+
+# ------------------------------------------------------------
+# Start SDL Manager
+# ------------------------------------------------------------
+systemctl --user stop sdl-mgr --no-pager
+sleep 2
 systemctl --user daemon-reload --no-pager
 systemctl --user restart sdl-mgr --no-pager
 sleep 3
@@ -413,3 +430,4 @@ echo "Removal Commands:"
 echo "  WARNING: Backup data directory first!!!!"
 echo "  systemctl --user disable sdl-mgr"
 echo "  rm -rf $SDL_HOME"
+

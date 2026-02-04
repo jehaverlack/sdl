@@ -48,5 +48,5 @@ echo "  Node:    ${NODE_BIN}"
 export PATH="${NODE_BIN_DIR}:${PATH}"
 cd "${SDL_MGR_APP_DIR}"
 
-# Start in foreground (use nohup or systemd for background)
-exec "${NPM_BIN}" start
+# Start in foreground
+"${NPM_BIN}" start &
