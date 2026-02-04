@@ -52,6 +52,8 @@ MVP - Minimum Viable Product Task List
   - [ ] Show system type (Physical 🖥️ / VM 💠)
   - [ ] Show GPU VRAM in GPU column (e.g., "2 GPUs (48 GB)")
   - [ ] Show worker uptime in dashboard
+  - [ ] Display last seen as elapsed time in dashboard, not date
+  - [ ] Track Username for sdl process
 
 **Resource Management**
 - [ ] CPU Reserve Capacity Allocation
@@ -70,7 +72,12 @@ MVP - Minimum Viable Product Task List
   - [ ] Support for system-level (sudo) and user-level services
 - [ ] SDL-MGR auto-installs SDL-WKR
   - [ ] Manager node becomes worker by default
-  - [ ] Config flag to disable: `install_worker_on_manager: false`
+  - [ ] Config flag to disable: `install_worker_on_manager: false
+  - [ ] Pass HTTP Port to SDL-WKR Curl installer
+  - [ ] Update Install Summary
+  - [ ] Add Quite Mode to sdl-wkr install
+
+
 
 **Data & Storage**
 - [ ] Data Storage Organizational Structure
@@ -85,8 +92,18 @@ MVP - Minimum Viable Product Task List
 
 **Projects**
 - [ ] Project Management Org Structure
+  - [ ] Define project metadata schema
+  - [ ] Project lifecycle states (draft, active, archived)
+  - [ ] Permission/access control model
 - [ ] Experiment Organization under Org Structure
+  - [ ] Experiment templates
+  - [ ] Parameter tracking
+  - [ ] Result linking to experiments
 - [ ] HPC Experiment Binary Development
+  - [ ] sdl-wkr Capablity detection (phyton, etc)
+  - [ ] Binary packaging format
+  - [ ] Dependency management
+  - [ ] Version control for binaries
 
 **Dashboard Enhancements**
 - [x] Dark/Light theme polish (CSS refinements)

@@ -146,11 +146,11 @@ SDL_HOME=$HOME/.sdl
 
 SDL_VER=$(curl -s http://${SDL_MGR_IP}:8081/api/config | jq -r '.package.version')
 SDL_DESC=$(curl -s http://${SDL_MGR_IP}:8081/api/config | jq -r '.package.description')
-SDL_ABBR=$(curl -s http://${SDL_MGR_IP}:8081/api/config | jq -r '.package.abbr')
+# SDL_ABBR=$(curl -s http://${SDL_MGR_IP}:8081/api/config | jq -r '.package.abbr')
 SDL_COPYRT=$(curl -s http://${SDL_MGR_IP}:8081/api/config | jq -r '.package.copyright') 
 
 echo "###############################################"
-echo "${SDL_DESC} (${SDL_ABBR})"
+# echo "${SDL_DESC} (${SDL_ABBR})"
 echo "Version: ${SDL_VER}"
 echo "Copyright: (C) ${SDL_COPYRT}"
 echo "Installing SDL Worker..."
