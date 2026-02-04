@@ -14,31 +14,95 @@ The Software Defined Laboratory (SDL) project provides a generalized distributed
 
 # Roadmap
 
-## Status
-
-- [x] sdl-mgr MQTT Broker
-- [x] sdl-mgr UDP Beacon
-- [x] sdl-mgr Web UI MQTT WebSocket Pub/Sub
-- [x] sdl-wkr UDP Listener
-
-
 ## Prioritized Tasks
 
 MVP - Minimum Viable Product Task List
 
+**Core Infrastructure** ✅ (Complete)
+- [x] sdl-mgr MQTT Broker
+- [x] sdl-mgr UDP Beacon
+- [x] sdl-mgr Web UI MQTT WebSocket Pub/Sub
+- [x] sdl-wkr UDP Listener
 - [x] SDL_ID Node ID
 - [x] Version Updater Script
-- [x] Deploy sld-mgr to $SDL_HOME/sdl-mgr
+- [x] Deploy sdl-mgr to $SDL_HOME/sdl-mgr
 - [x] Create SDL Worker Dist Build Process
 - [x] Create SDL Worker Install to $SDL_HOME
 - [x] SDL Install Script
-- [ ] Create SDL Worker Auto Update Process
+- [x] Create SDL Worker Auto Update Process
 - [x] Create Worker Join Process
-- [ ] Create Worker Telementry Process
+- [x] Create Worker Telemetry Process
+
+**Worker Monitoring & Telemetry** 🔄 (In Progress)
+- [ ] Worker Hardware Inventory Detection
+  - [ ] Physical vs Logical CPU cores (hyperthreading)
+  - [ ] Physical vs VM detection (hypervisor flag)
+  - [ ] GPU VRAM capacity aggregation
+  - [ ] Memory capacity (bytes → GB conversion)
+- [ ] Worker Real-time Load Status (pure Node.js)
+  - [ ] CPU usage percentage (`os.cpus()` times)
+  - [ ] RAM usage (total/free/used via `os.totalmem()/freemem()`)
+  - [ ] GPU usage (exec-based: nvidia-smi, rocm-smi)
+  - [ ] Disk IO (optional: exec-based)
+- [ ] Worker Uptime Tracking
+  - [ ] SDL process uptime (`process.uptime()`)
+  - [ ] OS uptime (`os.uptime()`)
+- [ ] Worker Display Improvements
+  - [ ] Show OS distro + version in Platform column (e.g., "Debian 12 / x64")
+  - [ ] Show system type (Physical 🖥️ / VM 💠)
+  - [ ] Show GPU VRAM in GPU column (e.g., "2 GPUs (48 GB)")
+  - [ ] Show worker uptime in dashboard
+
+**Resource Management**
+- [ ] CPU Reserve Capacity Allocation
+  - [ ] Config option: `reserve_cpus: N` (keep N cores for system)
+  - [ ] Track: `total`, `reserved`, `allocated`, `available`, `used`
+  - [ ] Display reserved capacity in dashboard
+- [ ] Memory Reserve Capacity (optional, future)
+- [ ] GPU Reserve Capacity (optional, future)
+
+**Service Management**
+- [ ] Start/Stop shell scripts (for systems without systemd user services)
+  - [ ] `start-sdl-mgr.sh` / `stop-sdl-mgr.sh`
+  - [ ] `start-sdl-wkr.sh` / `stop-sdl-wkr.sh`
+- [ ] Combined systemd service
+  - [ ] `sdl.service` to manage both sdl-mgr and sdl-wkr together
+  - [ ] Support for system-level (sudo) and user-level services
+- [ ] SDL-MGR auto-installs SDL-WKR
+  - [ ] Manager node becomes worker by default
+  - [ ] Config flag to disable: `install_worker_on_manager: false`
+
+**Data & Storage**
 - [ ] Data Storage Organizational Structure
-- [ ] MinIO S3 Storage Server
-- [ ] Worker Telemetry Hardware Inventory (CPU, RAM, GPU, etc)
-- [ ] Worker Telementry Load Status (CPU, RAM, GPU, Disk IO, etc)
+  - [ ] Define directory hierarchy for tasks, results, logs
+  - [ ] Implement file naming conventions
+  - [ ] Add cleanup/retention policies
+- [ ] MinIO S3 Storage Server Integration
+  - [ ] Install and configure MinIO
+  - [ ] S3 bucket structure for SDL data
+  - [ ] Worker access to S3 storage
+  - [ ] Web UI S3 browser integration
+
+**Projects**
+- [ ] Project Management Org Structure
+- [ ] Experiment Organization under Org Structure
+- [ ] HPC Experiment Binary Development
+
+**Dashboard Enhancements**
+- [x] Dark/Light theme polish (CSS refinements)
+- [ ] Real-time resource graphs (Chart.js)
+- [ ] Worker status history timeline
+- [ ] Cluster health indicators
+- [ ] Alert/notification system for worker failures
+- [ ] Add a Clock to the Dashboard (ISO 8601)
+
+**Testing & Documentation**
+- [ ] Cross-platform testing (Debian, Ubuntu, Arch, Fedora, Win, OSx, BSD)
+- [ ] Installation documentation
+- [ ] Configuration examples
+- [ ] Troubleshooting guide
+
+---
 
 # Design
 
