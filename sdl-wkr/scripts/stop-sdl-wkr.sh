@@ -6,7 +6,7 @@ use_systemd() {
   # Check if systemd user mode is available and service exists
   if systemctl --user status >/dev/null 2>&1; then
     # Check if our service file exists
-    if systemctl --user list-unit-files | grep -q "^sdl-mgr.service"; then
+    if systemctl --user list-unit-files | grep -q "^sdl-wkr.service"; then
       return 0  # Use systemd
     fi
   fi
