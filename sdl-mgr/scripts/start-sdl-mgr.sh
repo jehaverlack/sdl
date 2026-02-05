@@ -2,6 +2,17 @@
 # start-sdl-mgr.sh - Script to start SDL Manager
 set -euo pipefail
 
+use_systemd() {
+  # Check if systemd user mode is available and service exists
+  if systemctl --user status >/dev/null 2>&1; then
+    # Check if our service file exists
+    if systemctl --user list-unit-files | grep -q "^sdl-mgr.service"; then
+      return 0  # Use systemd
+    fi
+  fi
+  return 1  # Use manual scripts
+}
+
 # Get $SDL_HOME directory from SCRIPT PATH
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SDL_HOME="$(cd "$SCRIPT_DIR/.." && pwd)"
@@ -48,5 +59,9 @@ echo "  Node:    ${NODE_BIN}"
 export PATH="${NODE_BIN_DIR}:${PATH}"
 cd "${SDL_MGR_APP_DIR}"
 
-# Start in foreground
-"${NPM_BIN}" start &
+if use_systemd; then
+  systemctl --user start sdl-mgr
+else
+  # Manual background start logic
+  "${NPM_BIN}" start &
+fi

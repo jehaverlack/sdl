@@ -2,6 +2,17 @@
 # stop-sdl-mgr.sh - Script to stop SDL Manager
 set -euo pipefail
 
+use_systemd() {
+  # Check if systemd user mode is available and service exists
+  if systemctl --user status >/dev/null 2>&1; then
+    # Check if our service file exists
+    if systemctl --user list-unit-files | grep -q "^sdl-mgr.service"; then
+      return 0  # Use systemd
+    fi
+  fi
+  return 1  # Use manual scripts
+}
+
 # Get sdl-mgr PID
 SDL_MGR_PID=""
 for pid in $(pgrep -f 'node' 2>/dev/null || true); do
@@ -19,27 +30,32 @@ fi
 
 echo "Stopping SDL Manager (PID: ${SDL_MGR_PID})..."
 
-# Send SIGTERM for graceful shutdown
-kill "$SDL_MGR_PID"
+if use_systemd; then
+  systemctl --user stop sdl-mgr
+else
+  # Manual PID-based stop logic
+  # Send SIGTERM for graceful shutdown
+  kill "$SDL_MGR_PID"
 
-# Wait up to 10 seconds for process to exit
-for i in {1..10}; do
-  if ! kill -0 "$SDL_MGR_PID" 2>/dev/null; then
-    echo "SDL Manager stopped successfully"
-    exit 0
-  fi
-  sleep 1
-done
+  # Wait up to 10 seconds for process to exit
+  for i in {1..10}; do
+    if ! kill -0 "$SDL_MGR_PID" 2>/dev/null; then
+      echo "SDL Manager stopped successfully"
+      exit 0
+    fi
+    sleep 1
+  done
 
-# If still running after 10 seconds, force kill
-if kill -0 "$SDL_MGR_PID" 2>/dev/null; then
-  echo "WARNING: Graceful shutdown failed, forcing kill..."
-  kill -9 "$SDL_MGR_PID"
-  sleep 1
-  
+  # If still running after 10 seconds, force kill
   if kill -0 "$SDL_MGR_PID" 2>/dev/null; then
-    echo "ERROR: Failed to stop SDL Manager"
-    exit 1
+    echo "WARNING: Graceful shutdown failed, forcing kill..."
+    kill -9 "$SDL_MGR_PID"
+    sleep 1
+    
+    if kill -0 "$SDL_MGR_PID" 2>/dev/null; then
+      echo "ERROR: Failed to stop SDL Manager"
+      exit 1
+    fi
   fi
 fi
 
