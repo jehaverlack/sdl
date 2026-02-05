@@ -17,6 +17,14 @@ use_systemd() {
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SDL_HOME="$(cd "$SCRIPT_DIR/.." && pwd)"
 
+if use_systemd; then
+  # Systemd mode - let systemd handle it
+  echo "Starting SDL Manager (systemd)..."
+  systemctl --user start sdl-mgr
+  exit 0
+fi
+
+# Manual mode - continue with checks
 NODE_BIN_DIR="${SDL_HOME}/nodejs/current/bin"
 NODE_BIN="${NODE_BIN_DIR}/node"
 NPM_BIN="${NODE_BIN_DIR}/npm"
@@ -35,7 +43,7 @@ done
 
 if [[ -n "$SDL_MGR_PID" ]]; then
     echo "ERROR: SDL Manager is already running with PID ${SDL_MGR_PID}"
-    echo "       Stop it first: kill ${SDL_MGR_PID}"
+    echo "       Stop it first: ${SDL_HOME}/scripts/stop-sdl-mgr.sh"
     exit 1
 fi
 
@@ -54,14 +62,4 @@ fi
 
 echo "Starting SDL Manager..."
 echo "  App Dir: ${SDL_MGR_APP_DIR}"
-echo "  Node:    ${NODE_BIN}"
-
-export PATH="${NODE_BIN_DIR}:${PATH}"
-cd "${SDL_MGR_APP_DIR}"
-
-if use_systemd; then
-  systemctl --user start sdl-mgr
-else
-  # Manual background start logic
-  "${NPM_BIN}" start &
-fi
+echo "  Node:

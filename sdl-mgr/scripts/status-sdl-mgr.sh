@@ -31,6 +31,11 @@ else
       exit 0
   fi
 
-  echo "SDL Manager is running with PID: ${SDL_MGR_PID}"
+  # Get process uptime
+  PROCESS_START=$(ps -p "$SDL_MGR_PID" -o lstart= 2>/dev/null || echo "unknown")
+
+  echo "SDL Manager is running"
+  echo "  PID:     ${SDL_MGR_PID}"
+  echo "  Started: ${PROCESS_START}"
   exit 0
 fi
