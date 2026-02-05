@@ -56,10 +56,7 @@ resolve_dirs() {
 use_systemd() {
   # Check if systemd user mode is available and service exists
   if systemctl --user status >/dev/null 2>&1; then
-    # Check if our service file exists
-    if systemctl --user list-unit-files | grep -q "^sdl-mgr.service"; then
-      return 0  # Use systemd
-    fi
+    return 0  # Use systemd
   fi
   return 1  # Use manual scripts
 }
@@ -79,7 +76,7 @@ fi
 # ------------------------------------------------------------
 # Requirements
 # ------------------------------------------------------------
-for cmd in awk curl grep jq sed sha256sum tar unzip; do
+for cmd in awk curl grep jq nc sed sha256sum tar unzip; do
   command -v "$cmd" >/dev/null || {
     echo "ERROR: $cmd is required"
     exit 1
@@ -170,13 +167,8 @@ fi
 
 
 # ------------------------------------------------------------
-# systemd user service check
+# Setting SDL variables
 # ------------------------------------------------------------
-if ! systemctl --user status >/dev/null 2>&1; then
-  echo "ERROR: systemd user services are not available"
-  echo "       SDL requires systemd --user support"
-  exit 1
-fi
 
 SDL_VERSION="$(jq -r '.METADATA.version' "$META_FILE")"
 SDL_VERSION_DATE="$(jq -r '.METADATA.version_date' "$META_FILE")"
@@ -398,46 +390,48 @@ $NPM_BIN install
 # ------------------------------------------------------------
 # Copy Start / Stop Scripts
 # ------------------------------------------------------------
+mkdir -p "$SDL_HOME/scripts/"
 cp "$SDL_MGR/current/scripts/start-sdl-mgr.sh" "$SDL_HOME/scripts/"
 cp "$SDL_MGR/current/scripts/stop-sdl-mgr.sh" "$SDL_HOME/scripts/"
 cp "$SDL_MGR/current/scripts/status-sdl-mgr.sh" "$SDL_HOME/scripts/"
+chmod u+x "$SDL_HOME/scripts/"*
 
 
 # ------------------------------------------------------------
 # Install Systemd Unit Files
 # Copy SDL_MGR/current/scripts/sdl-mgr.service to ~/.config/systemd/user
 # ------------------------------------------------------------
-echo ""
-echo "Installing SystemD Unit Files"
+if use_systemd; then
+  echo ""
+  echo "Installing SystemD Unit Files"
 
-mkdir -p ~/.config/systemd/user
-cp "$SDL_MGR/current/scripts/sdl-mgr.service" ~/.config/systemd/user/
+  mkdir -p ~/.config/systemd/user
+  cp "$SDL_MGR/current/scripts/sdl-mgr.service" ~/.config/systemd/user/
 
-
+  "${SDL_HOME}/scripts/stop-sdl-mgr.sh"
+  sleep 1
+  systemctl --user daemon-reload --no-pager
+fi
 
 
 # ------------------------------------------------------------
 # Start SDL Manager
 # ------------------------------------------------------------
-systemctl --user stop sdl-mgr --no-pager
+"${SDL_HOME}/scripts/start-sdl-mgr.sh"
 sleep 2
-systemctl --user daemon-reload --no-pager
-systemctl --user restart sdl-mgr --no-pager
-sleep 3
-systemctl --user status sdl-mgr --no-pager
+"${SDL_HOME}/scripts/status-sdl-mgr.sh"
+
+if [ $? -ne 0 ]; then
+  echo ""
+  echo "ERROR: SDL Manager failed to start"
+  exit 1
+fi
+
+
+# 
+
 
 echo ""
 echo "SDL Manager deployed:"
 echo "  to: $SDL_HOME"
-
-echo "SDL Controls:"
-echo "  systemctl --user status sdl-mgr"
-echo "  systemctl --user start sdl-mgr"
-echo "  systemctl --user stop sdl-mgr"
-
-echo ""
-echo "Removal Commands:"
-echo "  WARNING: Backup data directory first!!!!"
-echo "  systemctl --user disable sdl-mgr"
-echo "  rm -rf $SDL_HOME"
 
