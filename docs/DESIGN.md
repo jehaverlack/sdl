@@ -64,16 +64,16 @@ MVP - Minimum Viable Product Task List
 - [ ] GPU Reserve Capacity (optional, future)
 
 **Service Management**
-- [ ] Start/Stop shell scripts (for systems without systemd user services)
-  - [ ] `start-sdl-mgr.sh` / `stop-sdl-mgr.sh`
-  - [ ] `start-sdl-wkr.sh` / `stop-sdl-wkr.sh`
+- [x] Start/Stop shell scripts (for systems without systemd user services)
+  - [x] `start-sdl-mgr.sh` / `stop-sdl-mgr.sh`
+  - [x] `start-sdl-wkr.sh` / `stop-sdl-wkr.sh`
 - [ ] Combined systemd service
   - [ ] `sdl.service` to manage both sdl-mgr and sdl-wkr together
   - [ ] Support for system-level (sudo) and user-level services
 - [ ] SDL-MGR auto-installs SDL-WKR
   - [ ] Manager node becomes worker by default
   - [ ] Config flag to disable: `install_worker_on_manager: false
-  - [ ] Pass HTTP Port to SDL-WKR Curl installer
+  - [x] Pass HTTP Port to SDL-WKR Curl installer
   - [ ] Update Install Summary
   - [ ] Add Quite Mode to sdl-wkr install
 
