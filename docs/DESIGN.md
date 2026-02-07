@@ -54,6 +54,10 @@ MVP - Minimum Viable Product Task List
   - [ ] Show worker uptime in dashboard
   - [ ] Display last seen as elapsed time in dashboard, not date
   - [ ] Track Username for sdl process
+- [ ] Web UI
+  - [ ] Progresive Web App
+  - [ ] Editable Dashboard
+  
 
 **Resource Management**
 - [ ] CPU Reserve Capacity Allocation

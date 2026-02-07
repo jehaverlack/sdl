@@ -1,10 +1,9 @@
 const module = 'sdl-wkr'; // Module Name
-import { load_config, log } from '../nwa-lib/index.js';
+import { load_config, log, getUptimeDHMS, getOSUptimeDHMS } from '../nwa-lib/index.js';
 import dgram from 'dgram';
 import mqtt from 'mqtt';
-import os from 'os';
-import { exec } from 'child_process';
-
+import os, { platform } from 'os';
+import { exec, execSync } from 'child_process';
 
 const config = load_config();
 
@@ -19,6 +18,7 @@ let mqttClient = null;
 let clusterConfig = null;
 let updating = false;
 let telemetryTimer = null; 
+let lastCpuInfo = null;
 
 // -------------------------------
 // Start UDP discovery
@@ -306,14 +306,80 @@ function startTelemetry() {
   }, telemetryInterval);
 }
 
+// Add this function for per-CPU usage
+function getPerCPUUsage() {
+  const cpus = os.cpus();
+  
+  if (!lastCpuInfo || !lastCpuInfo.perCpu) {
+    // First call - initialize
+    const perCpu = cpus.map(cpu => {
+      let total = 0;
+      for (let type in cpu.times) {
+        total += cpu.times[type];
+      }
+      return {
+        idle: cpu.times.idle,
+        total: total
+      };
+    });
+    
+    lastCpuInfo = lastCpuInfo || {};
+    lastCpuInfo.perCpu = perCpu;
+    
+    return cpus.map(() => 0); // Return 0% for all CPUs on first call
+  }
+  
+  // Calculate per-CPU usage
+  const usage = cpus.map((cpu, i) => {
+    let total = 0;
+    for (let type in cpu.times) {
+      total += cpu.times[type];
+    }
+    
+    const idleDelta = cpu.times.idle - lastCpuInfo.perCpu[i].idle;
+    const totalDelta = total - lastCpuInfo.perCpu[i].total;
+    
+    const cpuUsage = 100 - (100 * idleDelta / totalDelta);
+    
+    // Update stored values
+    lastCpuInfo.perCpu[i] = {
+      idle: cpu.times.idle,
+      total: total
+    };
+    
+    return Math.max(0, Math.min(100, Math.round(cpuUsage)));
+  });
+  
+  return usage;
+}
+
+// Update getCPUUsagePercent to calculate average from per-CPU
+function getCPUUsagePercent() {
+  const perCpuUsage = getPerCPUUsage();
+  if (perCpuUsage.length === 0) return 0;
+  
+  const total = perCpuUsage.reduce((sum, usage) => sum + usage, 0);
+  return Math.round(total / perCpuUsage.length);
+}
+
+// -------------------------------
+// Publish telemetry
+// -------------------------------
 function publishTelemetry(topic) {
   if (!mqttClient || !authorized) return;
 
   const gpuCount = Array.isArray(config.host.gpu) ? config.host.gpu.length : 0;
   
-  // ✅ Convert GB to bytes
-  const memoryBytes = config.host.memory.total_gb 
-    ? config.host.memory.total_gb * 1024 * 1024 * 1024 
+  // Get real-time memory usage
+  const totalMem = os.totalmem();
+  const freeMem = os.freemem();
+  const usedMem = totalMem - freeMem;
+  
+  // Get CPU usage
+  const perCpuUsage = getPerCPUUsage();
+  // const totalCpuUsage = getCPUUsagePercent();
+  const totalCpuUsage = perCpuUsage.length > 0
+    ? Math.round(perCpuUsage.reduce((sum, usage) => sum + usage, 0) / perCpuUsage.length)
     : 0;
 
   const telemetry = {
@@ -323,25 +389,49 @@ function publishTelemetry(topic) {
     host: config.identity.hostname,
     type: 'worker-telemetry',
     msg: {
-      sdl_id: config.identity.sdl_id,
-      hostname: config.identity.hostname,
-      status: 'active',
+      system: {
+        platform: config.host.os.platform,
+        arch: config.host.cpu.arch,
+        distro: config.host.os.pretty_name,
+        distro_name: config.host.os.name,
+        distro_version: config.host.os.version
+      },
+      uptime: {
+        process: Math.floor(process.uptime()),
+        proc_dhms: getUptimeDHMS(),
+        system: Math.floor(os.uptime()),
+        sys_dhms: getOSUptimeDHMS()
+      },
       resources: {
         cpus: {
           allocated: config.host.cpu.cores_logical,
-          available: config.host.cpu.cores_logical,
-          used: 0
+          available: config.host.cpu.cores_logical
         },
         memory: {
-          allocated: memoryBytes,   // ✅ Fixed
-          available: memoryBytes,   // ✅ Fixed
-          used: 0
+          allocated: totalMem
         },
         gpus: {
           allocated: gpuCount,
-          available: gpuCount,
-          used: 0
+          available: gpuCount
         }
+      },
+      usage: {
+        cpu: {
+          total: totalCpuUsage,
+          per_core: perCpuUsage
+        },
+        memory: {
+          total: totalMem,
+          used: usedMem,
+          free: freeMem,
+          percent_used: Math.round((usedMem / totalMem) * 100)
+        },
+        gpu: getGPUUsage()
+      },
+      load: {
+        1: os.loadavg()[0],
+        5: os.loadavg()[1],
+        15: os.loadavg()[2]
       }
     }
   };
@@ -357,6 +447,55 @@ function publishTelemetry(topic) {
     }
   );
 }
+
+
+// Add GPU telemetry function (exec-based)
+function getGPUUsage() {
+  const gpuCount = Array.isArray(config.host.gpu) ? config.host.gpu.length : 0;
+  
+  if (gpuCount === 0) {
+    return {};
+  }
+  
+  try {
+    // Try nvidia-smi for NVIDIA GPUs
+    const output = execSync(
+      'nvidia-smi --query-gpu=utilization.gpu,memory.used,memory.total --format=csv,noheader,nounits',
+      { encoding: 'utf8', timeout: 5000 }
+    ).toString();
+    
+    const lines = output.trim().split('\n');
+    const gpus = lines.map((line, index) => {
+      const [util, memUsed, memTotal] = line.split(',').map(v => parseInt(v.trim()));
+      return {
+        id: index,
+        utilization: util,
+        memory_used_mb: memUsed,
+        memory_total_mb: memTotal,
+        memory_percent: Math.round((memUsed / memTotal) * 100)
+      };
+    });
+    
+    // Calculate totals
+    const totalUtil = Math.round(gpus.reduce((sum, gpu) => sum + gpu.utilization, 0) / gpus.length);
+    const totalMemUsed = gpus.reduce((sum, gpu) => sum + gpu.memory_used_mb, 0);
+    const totalMemTotal = gpus.reduce((sum, gpu) => sum + gpu.memory_total_mb, 0);
+    
+    return {
+      count: gpus.length,
+      total_utilization: totalUtil,
+      total_memory_used_mb: totalMemUsed,
+      total_memory_total_mb: totalMemTotal,
+      total_memory_percent: Math.round((totalMemUsed / totalMemTotal) * 100),
+      gpus: gpus
+    };
+  } catch (err) {
+    // nvidia-smi not available or failed
+    return { error: 'unavailable' };
+  }
+}
+
+
 
 function stopTelemetry() {
   if (telemetryTimer) {
