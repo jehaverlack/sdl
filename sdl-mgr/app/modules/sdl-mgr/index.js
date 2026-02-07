@@ -352,6 +352,7 @@ function publishStatus(client, topic) {
   //get ip addr
   const interfaces = os.networkInterfaces();
   let ip_addr = null;
+  let web_port = config.modules.web.port;
 
   for (const [iface, addrs] of Object.entries(interfaces)) {
     for (const addr of addrs) {
@@ -385,7 +386,7 @@ function publishStatus(client, topic) {
       sdl: {
         version: config.package.version,
         uptime: getUptimeDHMS(),
-        update_cmd: `curl -s http://${ip_addr}:${config.modules.web.port}/dist/install-sdl-wkr.sh | bash -s ${ip_addr}`
+        update_cmd: `curl -s http://${ip_addr}:${config.modules.web.port}/dist/install-sdl-wkr.sh | bash -s ${ip_addr}:${web_port}`,
       },
       cluster: config.cluster,
       resources: updatedState.meta.stats.resources,  // ✅ Add cluster resources
@@ -591,8 +592,8 @@ function startUdpBeacon() {
               web_ui_url: `http://${addr.address}:${config.modules.web.port}`, 
             },
             sdl_wkr_install_cmd: {
-              curl: `curl -s http://${addr.address}:${config.modules.web.port}/dist/install-sdl-wkr.sh | bash -s ${addr.address}`,
-              wget: `wget -O - http://${addr.address}:${config.modules.web.port}/dist/install-sdl-wkr.sh | bash -s ${addr.address}`
+              curl: `curl -s http://${addr.address}:${config.modules.web.port}/dist/install-sdl-wkr.sh | bash -s ${addr.address}:${config.modules.web.port}`,
+              wget: `wget -O - http://${addr.address}:${config.modules.web.port}/dist/install-sdl-wkr.sh | bash -s ${addr.address}:${config.modules.web.port}`,
             }
           }
         };

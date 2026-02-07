@@ -50,6 +50,12 @@ Listen to UDP 10101 for beacon messages broadcast by your SDL Manager.
 nc -u -l -k 10101 |jq
 ```
 
+Or to get the install command from the beacon message:
+
+```
+nc -u -l -k 10101 | jq -r '.msg.sdl_wkr_install_cmd[]'
+```
+
 > NOTE: CTRL-C to exit `nc`.  You cannot run `nc` on port 10101 in parallel with the sdl-wkr.  So run it once to get the install command.  Tnen install sdl-wkr.
 
 Run the **curl** or **wget** command provided by SDL Manager UDP beacon to install SDL Worker locally.
