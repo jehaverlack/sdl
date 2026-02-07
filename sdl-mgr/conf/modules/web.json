@@ -5,6 +5,7 @@
     "open_browser": false,
     "weblibs": {
         "bootstrap":"bootstrap/dist",
+        "bootstrap-icons":"bootstrap-icons",
         "chartjs":"chart.js/dist",
         "d3":"d3/dist",
         "fontawesome":"@fortawesome/fontawesome-free",

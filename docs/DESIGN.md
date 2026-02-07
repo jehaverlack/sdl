@@ -57,7 +57,8 @@ MVP - Minimum Viable Product Task List
 - [ ] Web UI
   - [ ] Progresive Web App
   - [ ] Editable Dashboard
-  
+  - [ ] Panel Icon
+
 
 **Resource Management**
 - [ ] CPU Reserve Capacity Allocation
