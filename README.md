@@ -6,7 +6,7 @@
 | **Copyright** | 2026 John Haverlack |
 | **License** | MIT |
 | **Version** | 0.3.8 |
-| **Date** | 2026-02-07 |
+| **Date** | 2026-02-08 |
 
 ## Overview
 

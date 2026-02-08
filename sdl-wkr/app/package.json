@@ -2,7 +2,7 @@
   "name": "sdl-wkr",
   "description": "Software Defined Laboratory: Worker (sdl-wkr)",
   "version": "0.3.8",
-  "version_date": "2026-02-07",
+  "version_date": "2026-02-08",
   "main": "index.js",
   "type": "module",
   "scripts": {

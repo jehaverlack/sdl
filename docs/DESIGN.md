@@ -6,7 +6,7 @@
 | **Copyright** | 2026 John Haverlack |
 | **License** | MIT |
 | **Version** | 0.3.8 |
-| **Date** | 2026-02-07 |
+| **Date** | 2026-02-08 |
 
 ## Overview
 
@@ -48,11 +48,11 @@ MVP - Minimum Viable Product Task List
   - [x] SDL process uptime (`process.uptime()`)
   - [x] OS uptime (`os.uptime()`)
 - [ ] Worker Display Improvements
-  - [ ] Show OS distro + version in Platform column (e.g., "Debian 12 / x64")
-  - [ ] Show system type (Physical 🖥️ / VM 💠)
+  - [x] Show OS distro + version in Platform column (e.g., "Debian 12 / x64")
+  - [x] Show system type (Physical 🖥️ / VM 💠)
   - [ ] Show GPU VRAM in GPU column (e.g., "2 GPUs (48 GB)")
-  - [ ] Show worker uptime in dashboard
-  - [ ] Display last seen as elapsed time in dashboard, not date
+  - [x] Show worker uptime in dashboard
+  - [x] Display last seen as elapsed time in dashboard, not date
   - [ ] Track Username for sdl process
 - [ ] Web UI
   - [ ] Progresive Web App
@@ -123,6 +123,7 @@ MVP - Minimum Viable Product Task List
 - [ ] Installation documentation
 - [ ] Configuration examples
 - [ ] Troubleshooting guide
+- [ ] Validate IP change Stablity
 
 ---
 
