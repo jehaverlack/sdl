@@ -500,7 +500,7 @@ function renderWorkersTable(msg) {
   html += '<table class="table table-sm table-striped table-hover">';
   html += '<thead>';
   html += '<tr>';
-  html += '<th>Hostname</th>';
+  html += '<th>System</th>';
   html += '<th>Status</th>';
   html += '<th><i class="fa fa-microchip"></i> CPU</th>';
   html += '<th><i class="fa fa-memory"></i> RAM</th>';
@@ -531,6 +531,11 @@ function renderWorkersTable(msg) {
     const hardwareDisplay = hwType === 'vm' 
       ? `${hwIcon} ${hwModel}` 
       : `${hwIcon} ${hwManuf} ${hwModel}`;
+
+    // ✅ OS info
+    const osDistro = worker.distro || 'Unknown';
+    const osArch = worker.arch || 'unknown';
+    const osPlatform = worker.platform || 'unknown';      
 
     // CPU
     const cpuAvail = worker.resources?.cpus?.available || 0;
@@ -576,7 +581,8 @@ function renderWorkersTable(msg) {
     html += `<td>
       <strong>${worker.hostname}</strong><br>
       <small class="text-muted" style="font-size:0.7em">${worker.sdl_id}</small><br>
-      <small class="text-muted" style="font-size:0.8em">${hardwareDisplay}</small>
+      <small class="text-muted" style="font-size:0.8em">${hardwareDisplay}</small><br>
+      <small class="text-muted" style="font-size:0.8em">${osDistro} ${osArch} ${osPlatform}</small>
     </td>`;
     
     // ✅ Status column with uptime and last seen
