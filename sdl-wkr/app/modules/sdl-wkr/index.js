@@ -2,8 +2,10 @@ const module = 'sdl-wkr'; // Module Name
 import { load_config, log, getUptimeDHMS, getOSUptimeDHMS } from '../nwa-lib/index.js';
 import dgram from 'dgram';
 import mqtt from 'mqtt';
+import fs from 'fs';
 import os, { platform } from 'os';
 import { exec, execSync } from 'child_process';
+import { get } from 'http';
 
 const config = load_config();
 
@@ -237,10 +239,17 @@ function handleClusterStatus(payload) {
   const clusterVersion = payload.msg?.sdl?.version;
   const updateCmd = payload.msg?.sdl?.update_cmd;
   const localVersion = config.package.version;
+  const uptime = payload.msg?.sdl?.uptime_secs;
+
 
   if (!clusterVersion) return;
 
   if (clusterVersion !== localVersion) {
+    log(
+      `${module}: version mismatch detected (cluster=${clusterVersion}, local=${localVersion})`
+    );
+    triggerWorkerUpdate(clusterVersion, updateCmd);
+  } else if (uptime < 5) { // sld-mgr restarts for Development Testing
     log(
       `${module}: version mismatch detected (cluster=${clusterVersion}, local=${localVersion})`
     );
@@ -394,7 +403,8 @@ function publishTelemetry(topic) {
         arch: config.host.cpu.arch,
         distro: config.host.os.pretty_name,
         distro_name: config.host.os.name,
-        distro_version: config.host.os.version
+        distro_version: config.host.os.version,
+        hardware: getSystemHardware()
       },
       uptime: {
         process: Math.floor(process.uptime()),
@@ -496,6 +506,92 @@ function getGPUUsage() {
 }
 
 
+
+function getSystemHardware() {
+  const hardware = {
+    type: 'unknown',
+    manufacturer: 'Unknown',
+    model: 'Unknown'
+  };
+
+  // Only run Linux-specific detection on Linux
+  if (config.host.os.platform !== 'linux') {
+    return hardware;
+  }
+
+  // === Linux-specific detection below ===
+
+  // Check for Raspberry Pi FIRST
+  try {
+    const piModel = fs.readFileSync('/proc/device-tree/model', 'utf8')
+      .replace(/\0/g, '')
+      .trim();
+    
+    if (piModel) {
+      hardware.type = 'hw';  // ✅ Changed from 'physical'
+      hardware.manufacturer = 'Raspberry Pi Foundation';
+      hardware.model = piModel;
+      return hardware;
+    }
+  } catch (err) {
+    // Not a Pi, continue
+  }
+
+  // Check for hypervisor flag
+  try {
+    const cpuinfo = fs.readFileSync('/proc/cpuinfo', 'utf8');
+    if (cpuinfo.includes('hypervisor')) {
+      hardware.type = 'vm';
+      
+      // Detect hypervisor type from DMI
+      try {
+        const manufacturer = fs.readFileSync('/sys/class/dmi/id/sys_vendor', 'utf8').trim();
+        const product = fs.readFileSync('/sys/class/dmi/id/product_name', 'utf8').trim();
+        
+        hardware.manufacturer = manufacturer;
+        
+        // Set model to hypervisor type
+        if (manufacturer.includes('QEMU') || product.includes('KVM')) {
+          hardware.model = 'KVM';
+        } else if (manufacturer.includes('VMware')) {
+          hardware.model = 'VMware';
+        } else if (manufacturer.includes('innotek')) {
+          hardware.model = 'VirtualBox';
+        } else if (manufacturer.includes('Microsoft')) {
+          hardware.model = 'Hyper-V';
+        } else if (manufacturer.includes('Xen')) {
+          hardware.model = 'Xen';
+        } else {
+          hardware.model = 'Unknown VM';
+        }
+        
+        return hardware;
+      } catch (err) {
+        hardware.manufacturer = 'Unknown';
+        hardware.model = 'Unknown VM';
+        return hardware;
+      }
+    }
+  } catch (err) {
+    // Can't read cpuinfo
+  }
+
+  // No hypervisor flag - likely physical, get DMI info
+  try {
+    const manufacturer = fs.readFileSync('/sys/class/dmi/id/sys_vendor', 'utf8').trim();
+    const product = fs.readFileSync('/sys/class/dmi/id/product_name', 'utf8').trim();
+
+    hardware.type = 'hw';  // ✅ Changed from 'physical'
+    hardware.manufacturer = manufacturer;
+    hardware.model = product;
+
+    return hardware;
+  } catch (err) {
+    // DMI not available
+  }
+
+  return hardware;
+}
 
 function stopTelemetry() {
   if (telemetryTimer) {

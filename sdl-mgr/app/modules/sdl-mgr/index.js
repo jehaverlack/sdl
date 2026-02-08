@@ -1,6 +1,6 @@
 const module = 'sdl-mgr'; // Module Name
 
-import { load_config, log, ipToInt, intToIp, computeBroadcast, getProcessStartTs, getUptimeDHMS } from '../nwa-lib/index.js';
+import { load_config, log, ipToInt, intToIp, computeBroadcast, getProcessStartTs, getUptimeDHMS, getUptimeSec } from '../nwa-lib/index.js';
 import mqtt from 'mqtt';
 import os from 'os';
 import dgram from 'dgram';
@@ -385,6 +385,7 @@ function publishStatus(client, topic) {
     msg: {
       sdl: {
         version: config.package.version,
+        uptime_secs: getUptimeSec(),
         uptime: getUptimeDHMS(),
         update_cmd: `curl -s http://${ip_addr}:${config.modules.web.port}/dist/install-sdl-wkr.sh | bash -s ${ip_addr}:${web_port}`,
       },

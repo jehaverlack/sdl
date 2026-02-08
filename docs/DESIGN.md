@@ -57,7 +57,7 @@ MVP - Minimum Viable Product Task List
 - [ ] Web UI
   - [ ] Progresive Web App
   - [ ] Editable Dashboard
-  - [ ] Panel Icon
+  - [x] Panel Icon
 
 
 **Resource Management**
