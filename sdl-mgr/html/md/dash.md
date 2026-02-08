@@ -7,7 +7,7 @@
       <div id="dash-modules-list"></div>
       <div id="dash-modules-age"></div>
     </div>
-    <div class="col-8" id="dash-sdl-wkrs">
+    <div class="col-10" id="dash-sdl-wkrs">
       <h5>Workers</h5>
     </div>
 </div>

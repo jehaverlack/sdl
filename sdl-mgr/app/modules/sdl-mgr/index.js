@@ -7,13 +7,12 @@ import dgram from 'dgram';
 import fs from 'fs';
 import path from 'path';
 
-
-
 const config = load_config();
 
 log(`Loaded module: ${module}`);
-// log(`${module}: Cluster Conf: ${JSON.stringify(config.cluster, null, 2)}`, true);
-// log(`${module}: Dirs: ${JSON.stringify(config.dirs, null, 2)}`, true);
+
+// ✅ In-memory workers state (built from telemetry only)
+let workersState = {};
 
 function loadClusterState(config) {
   const clusterDir = config.dirs.clstr;
@@ -30,31 +29,7 @@ function loadClusterState(config) {
       meta: {
         updated: new Date().toISOString(),
         started_at: new Date(getProcessStartTs()).toISOString(),
-        uptime: getUptimeDHMS(),
-        stats: {
-          workers: {
-            allocated: 0,
-            available: 0,
-            used: 0
-          },
-          resources: {
-            cpus: {
-              allocated: 0,
-              available: 0,
-              used: 0
-            },
-            memory: {
-              allocated: 0,
-              available: 0,
-              used: 0
-            },
-            gpus: {
-              allocated: 0,
-              available: 0,
-              used: 0
-            }
-          }
-        }
+        uptime: getUptimeDHMS()
       },
       cluster: config.cluster,
       "sdl-mgr": {
@@ -65,8 +40,7 @@ function loadClusterState(config) {
         distro: config.host.os.pretty_name,
         distro_name: config.host.os.name,
         distro_version: config.host.os.version
-      },
-      workers: {}
+      }
     };
 
     fs.writeFileSync(clusterFile, JSON.stringify(initialState, null, 2));
@@ -89,55 +63,15 @@ function saveClusterState(config, state) {
   // Write to disk
   try {
     fs.writeFileSync(clusterFile, JSON.stringify(state, null, 2));
-    log(`${module}: cluster state saved to ${clusterFile}`);
+    // log(`${module}: cluster state saved to ${clusterFile}`);
   } catch (err) {
     log(`${module}: failed to save cluster state: ${err}`);
     throw err;
   }
 }
 
-function addWorker(state, workerData) {
-  const sdl_id = workerData.sdl_id;
-
-  // Check if worker already exists
-  const isNewWorker = !state.workers[sdl_id];
-
-  // Add or update worker
-  state.workers[sdl_id] = {
-    sdl_id: workerData.sdl_id,
-    hostname: workerData.hostname,
-    version: workerData.sdl_version,
-    platform: workerData.platform,
-    arch: workerData.arch,
-    distro: workerData.distro || "Unknown",
-    distro_name: workerData.distro_name || "Unknown",
-    distro_version: workerData.distro_version || "Unknown",
-    resources: {
-      cpus: {
-        allocated: workerData.cpus || 0,
-        available: workerData.cpus || 0,
-        used: 0
-      },
-      memory: {
-        allocated: workerData.totalmem || 0,
-        available: workerData.totalmem || 0,
-        used: 0
-      },
-      gpus: {
-        allocated: workerData.gpus || 0,
-        available: workerData.gpus || 0,
-        used: 0
-      }
-    },
-    status: 'active',
-    joined_at: isNewWorker ? new Date().toISOString() : state.workers[sdl_id].joined_at,
-    last_seen: new Date().toISOString()
-  };
-
-  return state;
-}
-
-function computeStats(state) {
+// ✅ Compute stats from in-memory workers state
+function computeStats() {
   const stats = {
     workers: {
       allocated: 0,
@@ -164,29 +98,28 @@ function computeStats(state) {
   };
 
   // Count workers and aggregate resources
-  for (const worker of Object.values(state.workers)) {
+  for (const worker of Object.values(workersState)) {
     stats.workers.allocated++;
     
     if (worker.status === 'active') {
       stats.workers.available++;
       
-      stats.resources.cpus.available += worker.resources.cpus.available;
-      stats.resources.memory.available += worker.resources.memory.available;
-      stats.resources.gpus.available += worker.resources.gpus.available;
+      stats.resources.cpus.available += worker.resources?.cpus?.available || 0;
+      stats.resources.memory.available += worker.resources?.memory?.available || 0;
+      stats.resources.gpus.available += worker.resources?.gpus?.available || 0;
     }
 
-    stats.resources.cpus.allocated += worker.resources.cpus.allocated;
-    stats.resources.cpus.used += worker.resources.cpus.used;
+    stats.resources.cpus.allocated += worker.resources?.cpus?.allocated || 0;
+    stats.resources.cpus.used += worker.usage?.cpu?.total || 0;
     
-    stats.resources.memory.allocated += worker.resources.memory.allocated;
-    stats.resources.memory.used += worker.resources.memory.used;
+    stats.resources.memory.allocated += worker.resources?.memory?.allocated || 0;
+    stats.resources.memory.used += worker.usage?.memory?.used || 0;
     
-    stats.resources.gpus.allocated += worker.resources.gpus.allocated;
-    stats.resources.gpus.used += worker.resources.gpus.used;
+    stats.resources.gpus.allocated += worker.resources?.gpus?.allocated || 0;
+    stats.resources.gpus.used += worker.usage?.gpu?.total_utilization || 0;
   }
 
-  state.meta.stats = stats;
-  return state;
+  return stats;
 }
 
 //  Worker Join Handler
@@ -203,9 +136,6 @@ function startJoinHandler() {
     log(`${module}: MQTT disabled, cannot handle joins`);
     return;
   }
-
-  // Load current cluster state
-  let clusterState = loadClusterState(config);
 
   const joinReqTopic = mqttCfg.topics?.[module]?.sub?.['sdl_join-req'];
   const joinAuthzTopic = mqttCfg.topics?.[module]?.pub?.['sdl_join-authz'];
@@ -238,10 +168,8 @@ function startJoinHandler() {
       
       log(`${module}: received join request from ${joinReq.host} (${joinReq.sdl_id})`);
 
-      // Validate version
       const workerData = joinReq.msg['sdl-wkr'];
       const workerVersion = workerData?.sdl_version;
-      // const workerVersion = joinReq.msg?.worker?.version;
       const clusterVersion = config.package.version;
       
       let authorized = false;
@@ -249,13 +177,7 @@ function startJoinHandler() {
 
       if (workerVersion === clusterVersion) {
         authorized = true;
-        
-        // Add worker to cluster state
-        clusterState = addWorker(clusterState, workerData);
-        clusterState = computeStats(clusterState);
-        saveClusterState(config, clusterState);
-        
-        log(`${module}: worker ${joinReq.host} authorized and added to cluster`);
+        log(`${module}: worker ${joinReq.host} authorized (version ${workerVersion})`);
       } else {
         authorized = false;
         reason = 'version_mismatch';
@@ -271,7 +193,8 @@ function startJoinHandler() {
         type: 'join-authz',
         msg: {
           sdl_id: joinReq.sdl_id,
-          authorized: authorized
+          authorized: authorized,
+          reason: reason
         }
       };
 
@@ -282,8 +205,6 @@ function startJoinHandler() {
         err => {
           if (err) {
             log(`${module}: failed to publish join authz: ${err}`);
-          } else {
-            // log(`${module}: published join authz to ${joinAuthzTopic}`);
           }
         }
       );
@@ -297,8 +218,6 @@ function startJoinHandler() {
     log(`${module}: join handler MQTT error: ${err}`);
   });
 }
-
-
 
 function startSDLStatusPub() {
   const sdlCfg = config.modules[module];
@@ -322,59 +241,48 @@ function startSDLStatusPub() {
 
   const statusTopic = mqttCfg.topics?.[module]?.pub?.['sdl_cluster-status'];
   if (!statusTopic) {
-    log(`${module}: ${statusTopic} not configured`);
+    log(`${module}: cluster-status topic not configured`);
     return;
   }
 
-  // This is ok because we are running on localhost
   const mqttUrl = `mqtt://127.0.0.1:${mqttCfg.mqtt_port}`;
   const client = mqtt.connect(mqttUrl);
 
   client.on('connect', () => {
-    log(`${module}: connected to MQTT at ${mqttUrl}`);
+    log(`${module}: status publisher connected to MQTT at ${mqttUrl}`);
 
     publishStatus(client, statusTopic);
     setInterval(() => publishStatus(client, statusTopic), statusInterval);
   });
 
   client.on('error', err => {
-    log(`${module}: MQTT error: ${err}`);
+    log(`${module}: status publisher MQTT error: ${err}`);
   });
 }
 
 function publishStatus(client, topic) {
-  // Load current cluster state
-  const clusterState = loadClusterState(config);
-  
-  // Recompute stats to get latest resource totals
-  const updatedState = computeStats(clusterState);
+  // Compute stats from in-memory workers
+  const stats = computeStats();
 
-  //get ip addr
+  // Get IP for update command
   const interfaces = os.networkInterfaces();
   let ip_addr = null;
-  let web_port = config.modules.web.port;
 
   for (const [iface, addrs] of Object.entries(interfaces)) {
     for (const addr of addrs) {
-      // --- FILTERS ---
-
-      // IPv4 only
       if (addr.family !== 'IPv4') continue;
-
-      // Skip loopback
       if (addr.internal === true) continue;
-
-      // Skip /32 networks (no broadcast: e.g. Tailscale)
+      
       const cidr = Number(addr.cidr?.split('/')[1]);
       if (!Number.isInteger(cidr) || cidr >= 32) continue;
-
-      // Compute broadcast address
-      const broadcastAddr = computeBroadcast(addr.address, addr.netmask);
-      if (!broadcastAddr) continue;
-
-      ip_addr = addr.address
+      
+      ip_addr = addr.address;
+      break;
     }
+    if (ip_addr) break;
   }
+
+  const web_port = config.modules.web.port;
 
   const status = {
     ts: new Date().toISOString(),
@@ -387,11 +295,13 @@ function publishStatus(client, topic) {
         version: config.package.version,
         uptime_secs: getUptimeSec(),
         uptime: getUptimeDHMS(),
-        update_cmd: `curl -s http://${ip_addr}:${config.modules.web.port}/dist/install-sdl-wkr.sh | bash -s ${ip_addr}:${web_port}`,
+        update_cmd: ip_addr 
+          ? `curl -s http://${ip_addr}:${web_port}/dist/install-sdl-wkr.sh | bash -s ${ip_addr}:${web_port}`
+          : null
       },
       cluster: config.cluster,
-      resources: updatedState.meta.stats.resources,  // ✅ Add cluster resources
-      workers: updatedState.meta.stats.workers,      // ✅ Add worker counts
+      resources: stats.resources,
+      workers: stats.workers,
       modules: Object.fromEntries(
         Object.entries(config.modules).map(([name, mod]) => [
           name,
@@ -408,15 +318,12 @@ function publishStatus(client, topic) {
     err => {
       if (err) {
         log(`${module}: failed to publish status: ${err}`);
-      } else {
-        // log(`${module}: published status to ${topic}`);
       }
     }
   );
 }
 
-
-// ✅ NEW: Publish individual worker details
+// ✅ Publish workers from in-memory state
 function startWorkersPub() {
   const sdlCfg = config.modules[module];
   const mqttCfg = config.modules.mqtt;
@@ -459,9 +366,6 @@ function startWorkersPub() {
 }
 
 function publishWorkers(client, topic) {
-  // Load current cluster state
-  const clusterState = loadClusterState(config);
-
   const workersMsg = {
     ts: new Date().toISOString(),
     sdl_id: config.identity.sdl_id,
@@ -469,7 +373,7 @@ function publishWorkers(client, topic) {
     host: config.identity.hostname,
     type: 'cluster-workers',
     msg: {
-      workers: clusterState.workers
+      workers: workersState  // ✅ Use in-memory state from telemetry
     }
   };
 
@@ -480,18 +384,13 @@ function publishWorkers(client, topic) {
     err => {
       if (err) {
         log(`${module}: failed to publish workers: ${err}`);
-      } else {
-        // log(`${module}: published workers to ${topic}`);
       }
     }
   );
 }
 
-
 function startUdpBeacon() {
   let sdlCfg  = config.modules['sdl-mgr'];
-  // log(`${module}: DEBUG: SDL config: ${JSON.stringify(sdlCfg, null, 2)}`, true);
-  // log(`${module}: DEBUG: Cluster Conf: ${JSON.stringify(config.cluster, null, 2)}`, true);
   sdlCfg.cluster = config.cluster;
   const mqttCfg = config.modules.mqtt;
 
@@ -522,7 +421,6 @@ function startUdpBeacon() {
   };
 
   log(`${module}: cluster: ${JSON.stringify(cluster)}`);
-  
 
   if (!config.host?.network) {
     log(`${module}: no host network metadata available for UDP beacon`);
@@ -543,25 +441,16 @@ function startUdpBeacon() {
   setInterval(() => {
     const interfaces = os.networkInterfaces();
 
-    // for (const [iface, addrs] of Object.entries(config.host.network)) {
     for (const [iface, addrs] of Object.entries(interfaces)) {
       for (const addr of addrs) {
-        // --- FILTERS ---
-
-        // IPv4 only
         if (addr.family !== 'IPv4') continue;
-
-        // Skip loopback
         if (addr.internal === true) continue;
 
-        // Skip /32 networks (no broadcast: e.g. Tailscale)
         const cidr = Number(addr.cidr?.split('/')[1]);
         if (!Number.isInteger(cidr) || cidr >= 32) continue;
 
-        // Compute broadcast address
         const broadcastAddr = computeBroadcast(addr.address, addr.netmask);
         if (!broadcastAddr) continue;
-
 
         const beacon = {
           ts: new Date().toISOString(),
@@ -622,9 +511,8 @@ function startUdpBeacon() {
   );
 }
 
-
-// Update startHeartbeatListener to use telemetry topic
-function startTelemetryListener() {  // ✅ Renamed function
+// ✅ Build workers state from telemetry
+function startTelemetryListener() {
   const sdlCfg = config.modules[module];
   const mqttCfg = config.modules.mqtt;
 
@@ -638,9 +526,7 @@ function startTelemetryListener() {  // ✅ Renamed function
     return;
   }
 
-  let clusterState = loadClusterState(config);
-
-  const telemetryTopic = mqttCfg.topics?.[module]?.sub?.['sdl_cluster-telemetry'];  // ✅ Changed
+  const telemetryTopic = mqttCfg.topics?.[module]?.sub?.['sdl_cluster-telemetry'];
   if (!telemetryTopic) {
     log(`${module}: cluster-telemetry topic not configured`);
     return;
@@ -661,55 +547,53 @@ function startTelemetryListener() {  // ✅ Renamed function
     });
   });
 
-client.on('message', (topic, message) => {
-  if (topic !== telemetryTopic) return;
+  client.on('message', (topic, message) => {
+    if (topic !== telemetryTopic) return;
 
-  try {
-    const telemetry = JSON.parse(message.toString());
-    const sdl_id = telemetry.msg.sdl_id;
-
-    // Update worker's last_seen timestamp
-    if (clusterState.workers[sdl_id]) {
-      clusterState.workers[sdl_id].last_seen = new Date().toISOString();
-      clusterState.workers[sdl_id].status = 'active';
+    try {
+      const telemetry = JSON.parse(message.toString());
+      const sdl_id = telemetry.sdl_id;
+      const hostname = telemetry.host;
+      const now = new Date();
       
-      // ✅ MERGE resources instead of replacing
-      if (telemetry.msg.resources) {
-        // Merge each resource type
-        if (telemetry.msg.resources.cpus) {
-          clusterState.workers[sdl_id].resources.cpus = {
-            ...clusterState.workers[sdl_id].resources.cpus,
-            ...telemetry.msg.resources.cpus
-          };
-        }
-        if (telemetry.msg.resources.memory) {
-          clusterState.workers[sdl_id].resources.memory = {
-            ...clusterState.workers[sdl_id].resources.memory,
-            ...telemetry.msg.resources.memory
-          };
-        }
-        if (telemetry.msg.resources.gpus) {
-          clusterState.workers[sdl_id].resources.gpus = {
-            ...clusterState.workers[sdl_id].resources.gpus,
-            ...telemetry.msg.resources.gpus
-          };
-        }
-      }
+      // ✅ Build/update worker state from telemetry
+      workersState[sdl_id] = {
+        sdl_id: sdl_id,
+        hostname: hostname,
+        role: telemetry.role,
+        last_seen: now.toISOString(),           // ✅ ISO string
+        last_seen_utime: Math.floor(now.getTime() / 1000),  // ✅ Unix timestamp (seconds)
+             
+        // System info
+        platform: telemetry.msg?.system?.platform,
+        arch: telemetry.msg?.system?.arch,
+        distro: telemetry.msg?.system?.distro,
+        hardware: telemetry.msg?.system?.hardware,
+        
+        // Uptime
+        uptime: telemetry.msg?.uptime,
+        
+        // Resources
+        resources: telemetry.msg?.resources,
+        
+        // Usage
+        usage: telemetry.msg?.usage,
+        
+        // Load
+        load: telemetry.msg?.load
+      };
 
-      clusterState = computeStats(clusterState);
-      saveClusterState(config, clusterState);
+    } catch (err) {
+      log(`${module}: failed to process telemetry: ${err}`);
     }
-  } catch (err) {
-    log(`${module}: failed to process telemetry: ${err}`);
-  }
-});
+  });
 
   client.on('error', err => {
     log(`${module}: telemetry listener MQTT error: ${err}`);
   });
 }
 
-// Add Stale Worker Detection
+// ✅ Mark stale workers as inactive
 function startStaleWorkerDetection() {
   const sdlCfg = config.modules[module];
 
@@ -718,39 +602,32 @@ function startStaleWorkerDetection() {
     return;
   }
 
-  const checkInterval = 10000;  // Check every 10 seconds
-  const staleThreshold =
-    Number.isInteger(sdlCfg.worker_stale_threshold) &&
-    sdlCfg.worker_stale_threshold > 0
-      ? sdlCfg.worker_stale_threshold
-      : 30000;  // Default 30 seconds
+  const checkInterval = 10000;
+  
+  // Try multiple config locations for stale threshold
+  const staleThreshold = 
+    sdlCfg.expiration_timeout?.cluster_telemetry ||
+    sdlCfg.worker_stale_threshold ||
+    30000;
 
   setInterval(() => {
-    let clusterState = loadClusterState(config);
     const now = Date.now();
-    let changed = false;
 
-    for (const [sdl_id, worker] of Object.entries(clusterState.workers)) {
+    for (const [sdl_id, worker] of Object.entries(workersState)) {
       const lastSeenMs = Date.parse(worker.last_seen);
       const ageMs = now - lastSeenMs;
 
       if (ageMs > staleThreshold && worker.status === 'active') {
-        log(`${module}: worker ${worker.hostname} (${sdl_id}) marked as inactive (last seen ${Math.round(ageMs / 1000)}s ago)`);
-        clusterState.workers[sdl_id].status = 'inactive';
-        changed = true;
+        log(`${module}: worker ${worker.hostname} (${sdl_id}) marked inactive (${Math.round(ageMs / 1000)}s)`);
+        workersState[sdl_id].status = 'inactive';
       }
-    }
-
-    if (changed) {
-      clusterState = computeStats(clusterState);
-      saveClusterState(config, clusterState);
     }
   }, checkInterval);
 
-  log(`${module}: stale worker detection active (threshold: ${staleThreshold}ms, check interval: ${checkInterval}ms)`);
+  log(`${module}: stale worker detection active (threshold: ${staleThreshold}ms, check: ${checkInterval}ms)`);
 }
 
-// Update entry point
+// Entry point
 startSDLStatusPub();
 startWorkersPub();
 startTelemetryListener(); 
@@ -758,4 +635,3 @@ startUdpBeacon();
 loadClusterState(config);
 startJoinHandler();
 startStaleWorkerDetection();
-

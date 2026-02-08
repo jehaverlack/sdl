@@ -502,10 +502,11 @@ function renderWorkersTable(msg) {
   html += '<tr>';
   html += '<th>Hostname</th>';
   html += '<th>Status</th>';
+  html += '<th>Hardware</th>';
   html += '<th><i class="fa fa-microchip"></i> CPU</th>';
   html += '<th><i class="fa fa-memory"></i> RAM</th>';
   html += '<th><i class="fa fa-dice-d20"></i> GPU</th>';
-  html += '<th>Platform</th>';
+  html += '<th>Uptime</th>';
   html += '<th>Last Seen</th>';
   html += '</tr>';
   html += '</thead>';
@@ -516,36 +517,62 @@ function renderWorkersTable(msg) {
       ? '<span class="badge bg-success">Active</span>'
       : '<span class="badge bg-secondary">Inactive</span>';
 
+    // Hardware info
+    const hwType = worker.hardware?.type || 'unknown';
+    const hwIcon = hwType === 'hw' ? '🖥️' : hwType === 'vm' ? '💠' : '❓';
+    const hwManuf = worker.hardware?.manufacturer || 'Unknown';
+    const hwModel = worker.hardware?.model || 'Unknown';
+    const hardware = `<span title="${hwManuf} - ${hwModel}">${hwIcon} ${hwType === 'vm' ? hwModel : hwManuf}</span>`;
+
+    // CPU
     const cpuAvail = worker.resources?.cpus?.available || 0;
     const cpuTotal = worker.resources?.cpus?.allocated || 0;
-    const cpuUsed = worker.resources?.cpus?.used || 0;
+    const cpuUsed = worker.usage?.cpu?.total || 0;
 
+    // Memory
     const memAvail = worker.resources?.memory?.available || 0;
     const memTotal = worker.resources?.memory?.allocated || 0;
-    const memUsed = worker.resources?.memory?.used || 0;
+    const memUsed = worker.usage?.memory?.used || 0;
     
-    // Convert bytes to GB
     const memAvailGB = Math.round(memAvail / (1024 * 1024 * 1024));
     const memTotalGB = Math.round(memTotal / (1024 * 1024 * 1024));
-    const memUsedGB = memUsed > 0 ? Math.round(memUsed / (1024 * 1024 * 1024)) : 0;
+    const memUsedGB = Math.round(memUsed / (1024 * 1024 * 1024));
+    const memPercent = worker.usage?.memory?.percent_used || 0;
 
+    // GPU
     const gpuAvail = worker.resources?.gpus?.available || 0;
     const gpuTotal = worker.resources?.gpus?.allocated || 0;
-    const gpuUsed = worker.resources?.gpus?.used || 0;
+    const gpuData = worker.usage?.gpu;
+    const gpuUsed = gpuData?.total_utilization || 0;
+    const gpuMemMB = gpuData?.total_memory_total_mb || 0;
+    const gpuMemGB = Math.round(gpuMemMB / 1024);
 
-    const platform = `${worker.platform || 'unknown'} / ${worker.arch || 'unknown'}`;
+    // Uptime
+    const uptime = worker.uptime?.proc_dhms || 'N/A';
     
+    // Last seen
     const lastSeen = worker.last_seen 
       ? new Date(worker.last_seen).toLocaleString()
       : 'N/A';
 
     html += '<tr>';
-    html += `<td><strong>${worker.hostname}</strong><br><small class="text-muted">${worker.sdl_id}</small></td>`;
+    html += `<td><strong>${worker.hostname}</strong><br><small class="text-muted" style="font-size:0.7em">${worker.sdl_id.substring(0, 8)}...</small></td>`;
     html += `<td>${status}</td>`;
-    html += `<td><span class="dash-val">${cpuAvail}</span> / ${cpuTotal}${cpuUsed > 0 ? `<br><small>(${cpuUsed} used)</small>` : ''}</td>`;
-    html += `<td><span class="dash-val">${memAvailGB}</span> / ${memTotalGB} GB${memUsedGB > 0 ? `<br><small>(${memUsedGB} GB used)</small>` : ''}</td>`;
-    html += `<td><span class="dash-val">${gpuAvail}</span> / ${gpuTotal}${gpuUsed > 0 ? `<br><small>(${gpuUsed} used)</small>` : ''}</td>`;
-    html += `<td><small>${platform}</small></td>`;
+    html += `<td><small>${hardware}</small></td>`;
+    html += `<td>
+      <span class="dash-val">${cpuAvail}</span> / ${cpuTotal}
+      ${cpuUsed > 0 ? `<br><small class="text-muted">${cpuUsed}% load</small>` : ''}
+    </td>`;
+    html += `<td>
+      <span class="dash-val">${memAvailGB}</span> / ${memTotalGB} GB
+      ${memPercent > 0 ? `<br><small class="text-muted">${memPercent}% used</small>` : ''}
+    </td>`;
+    html += `<td>
+      <span class="dash-val">${gpuAvail}</span> / ${gpuTotal}
+      ${gpuMemGB > 0 ? `<br><small class="text-muted">(${gpuMemGB} GB)</small>` : ''}
+      ${gpuUsed > 0 ? `<br><small class="text-muted">${gpuUsed}% load</small>` : ''}
+    </td>`;
+    html += `<td><small>${uptime}</small></td>`;
     html += `<td><small>${lastSeen}</small></td>`;
     html += '</tr>';
   }

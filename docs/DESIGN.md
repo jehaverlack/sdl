@@ -34,19 +34,19 @@ MVP - Minimum Viable Product Task List
 - [x] Create Worker Telemetry Process
 
 **Worker Monitoring & Telemetry** 🔄 (In Progress)
-- [ ] Worker Hardware Inventory Detection
-  - [ ] Physical vs Logical CPU cores (hyperthreading)
-  - [ ] Physical vs VM detection (hypervisor flag)
-  - [ ] GPU VRAM capacity aggregation
-  - [ ] Memory capacity (bytes → GB conversion)
-- [ ] Worker Real-time Load Status (pure Node.js)
-  - [ ] CPU usage percentage (`os.cpus()` times)
-  - [ ] RAM usage (total/free/used via `os.totalmem()/freemem()`)
-  - [ ] GPU usage (exec-based: nvidia-smi, rocm-smi)
+- [x] Worker Hardware Inventory Detection
+  - [x] Physical vs Logical CPU cores (hyperthreading)
+  - [x] Physical vs VM detection (hypervisor flag)
+  - [x] GPU VRAM capacity aggregation
+  - [x] Memory capacity (bytes → GB conversion)
+- [x] Worker Real-time Load Status (pure Node.js)
+  - [x] CPU usage percentage (`os.cpus()` times)
+  - [x] RAM usage (total/free/used via `os.totalmem()/freemem()`)
+  - [x] GPU usage (exec-based: nvidia-smi, rocm-smi)
   - [ ] Disk IO (optional: exec-based)
-- [ ] Worker Uptime Tracking
-  - [ ] SDL process uptime (`process.uptime()`)
-  - [ ] OS uptime (`os.uptime()`)
+- [x] Worker Uptime Tracking
+  - [x] SDL process uptime (`process.uptime()`)
+  - [x] OS uptime (`os.uptime()`)
 - [ ] Worker Display Improvements
   - [ ] Show OS distro + version in Platform column (e.g., "Debian 12 / x64")
   - [ ] Show system type (Physical 🖥️ / VM 💠)
