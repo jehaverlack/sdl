@@ -525,11 +525,12 @@ function getSystemHardware() {
   try {
     const piModel = fs.readFileSync('/proc/device-tree/model', 'utf8')
       .replace(/\0/g, '')
+      .replace(/Raspberry Pi/, '')
       .trim();
     
     if (piModel) {
       hardware.type = 'hw';  // ✅ Changed from 'physical'
-      hardware.manufacturer = 'Raspberry Pi Foundation';
+      hardware.manufacturer = 'Raspberry Pi';
       hardware.model = piModel;
       return hardware;
     }
