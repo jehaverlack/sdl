@@ -602,8 +602,16 @@ function getUptimeDHMS() {
   const h = Math.floor((uptimeSec % 86400) / 3600);
   const m = Math.floor((uptimeSec % 3600) / 60);
   const s = Math.floor(uptimeSec % 60);
-  return `${d}.${h}.${m}.${s}`;
+  return `${d}d ${h}h ${m}m ${s}s`;
 }
 
+function getOSUptimeDHMS() {
+  const uptimeSec = os.uptime();
+  const d = Math.floor(uptimeSec / 86400);
+  const h = Math.floor((uptimeSec % 86400) / 3600);
+  const m = Math.floor((uptimeSec % 3600) / 60);
+  const s = Math.floor(uptimeSec % 60);
+  return `${d}d ${h}h ${m}m ${s}s`;
+}
 
-export { load_config, log, ipToInt, intToIp, computeBroadcast, getProcessStartTs, getUptimeMs, getUptimeSec, getUptimeDHMS };
+export { load_config, log, ipToInt, intToIp, computeBroadcast, getProcessStartTs, getUptimeMs, getUptimeSec, getUptimeDHMS, getOSUptimeDHMS };

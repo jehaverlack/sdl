@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # install-sdl-wkr.sh - Script to install SDL Worker
-# Usage: curl -s http://<SDL_MGR_IP>:8081/dist/install-sdl-wkr.sh | bash -s <SDL_MGR_IP>
+# Usage: curl -s http://<SDL_MGR_IP>:<SDL_MGR_PORT>/dist/install-sdl-wkr.sh | bash -s <SDL_MGR_IP>:<SDL_MGR_PORT>
 set -euo pipefail
 
 # ------------------------------------------------------------
@@ -79,11 +79,11 @@ install_nodejs() {
     esac
 
 
-    NODE_VER=$(curl -s http://${SDL_MGR_IP}:8081/api/config | jq -r '.nodejs.version')
+    NODE_VER=$(curl -s http://${SDL_MGR_IP}:${SDL_MGR_PORT}/api/config | jq -r '.nodejs.version')
     NODE_DIR="${SDL_HOME}/nodejs"
     NODE_VER_BASE="node-${NODE_VER}-${OS_PLATFORM}-${OS_ARCH}"
     NODE_FILE="node-${NODE_VER}-${OS_PLATFORM}-${OS_ARCH}.${EXT}"
-    NODE_URL="http://${SDL_MGR_IP}:8081/dist/${NODE_FILE}"
+    NODE_URL="http://${SDL_MGR_IP}:${SDL_MGR_PORT}/dist/${NODE_FILE}"
 
     
     #echo "NodeJS Version: ${NODE_VER}"
@@ -138,19 +138,21 @@ if [ -z "$1" ]; then
   exit 1
 fi
 
-SDL_MGR_IP=$1
+ARG1=$1 # SDL_MGR_IP:PORT
+SDL_MGR_IP=$(echo "$ARG1" | cut -d ':' -f 1)
+SDL_MGR_PORT=$(echo "$ARG1" | cut -d ':' -f 2)
 
-# SDL_HOME=$(curl -s http://${SDL_MGR_IP}:8081/api/config | jq -r '.dirs.sdlhome')
+# SDL_HOME=$(curl -s http://${SDL_MGR_IP}:${SDL_MGR_PORT}/api/config | jq -r '.dirs.sdlhome')
 SDL_HOME=$HOME/.sdl
 
 
-SDL_VER=$(curl -s http://${SDL_MGR_IP}:8081/api/config | jq -r '.package.version')
-SDL_DESC=$(curl -s http://${SDL_MGR_IP}:8081/api/config | jq -r '.package.description')
-SDL_ABBR=$(curl -s http://${SDL_MGR_IP}:8081/api/config | jq -r '.package.abbr')
-SDL_COPYRT=$(curl -s http://${SDL_MGR_IP}:8081/api/config | jq -r '.package.copyright') 
+SDL_VER=$(curl -s http://${SDL_MGR_IP}:${SDL_MGR_PORT}/api/config | jq -r '.package.version')
+SDL_DESC=$(curl -s http://${SDL_MGR_IP}:${SDL_MGR_PORT}/api/config | jq -r '.package.description')
+# SDL_ABBR=$(curl -s http://${SDL_MGR_IP}:${SDL_MGR_PORT}/api/config | jq -r '.package.abbr')
+SDL_COPYRT=$(curl -s http://${SDL_MGR_IP}:${SDL_MGR_PORT}/api/config | jq -r '.package.copyright') 
 
 echo "###############################################"
-echo "${SDL_DESC} (${SDL_ABBR})"
+# echo "${SDL_DESC} (${SDL_ABBR})"
 echo "Version: ${SDL_VER}"
 echo "Copyright: (C) ${SDL_COPYRT}"
 echo "Installing SDL Worker..."
@@ -160,7 +162,7 @@ echo ""
 
 TMP_DIR="${SDL_HOME}/tmp"
 SDL_WKR_DIR="${SDL_HOME}/sdl-wkr"
-SDL_WKR_VERSION=$(curl -s http://${SDL_MGR_IP}:8081/api/config | jq -r '.package.version')
+SDL_WKR_VERSION=$(curl -s http://${SDL_MGR_IP}:${SDL_MGR_PORT}/api/config | jq -r '.package.version')
 SDL_WKR_TGZ="sdl-wkr_${SDL_WKR_VERSION}.tgz"
 SDL_CONF_DIR="${SDL_HOME}/conf"
 SLD_LOGS_DIR="${SDL_HOME}/logs"
@@ -177,8 +179,8 @@ mkdir -p "${TMP_DIR}"
 
 
 # Download the latest sdl-wkr version to TMP_DIR
-WKR_TGZ_URL="http://${SDL_MGR_IP}:8081/dist/${SDL_WKR_TGZ}"
-WKR_TGZ_SHA256_URL="http://${SDL_MGR_IP}:8081/dist/${SDL_WKR_TGZ}.sha256"
+WKR_TGZ_URL="http://${SDL_MGR_IP}:${SDL_MGR_PORT}/dist/${SDL_WKR_TGZ}"
+WKR_TGZ_SHA256_URL="http://${SDL_MGR_IP}:${SDL_MGR_PORT}/dist/${SDL_WKR_TGZ}.sha256"
 
 curl -sSL --fail "${WKR_TGZ_URL}" -o "${TMP_DIR}/${SDL_WKR_TGZ}" || { echo "Failed to download sdl-wkr"; exit 1; }
 curl -sSL --fail "${WKR_TGZ_SHA256_URL}" -o "${TMP_DIR}/${SDL_WKR_TGZ}.sha256" || { echo "Failed to download sdl-wkr SHA256"; exit 1; }
@@ -214,7 +216,7 @@ cp "$SDL_WKR_DIR/current/scripts/sdl-wkr.service" ~/.config/systemd/user/
 
 
 # Install Node.js idempotently
-NODE_VER=$(curl -s http://${SDL_MGR_IP}:8081/api/config | jq -r '.nodejs.version')
+NODE_VER=$(curl -s http://${SDL_MGR_IP}:${SDL_MGR_PORT}/api/config | jq -r '.nodejs.version')
 NODE_DIR="${SDL_HOME}/nodejs"
 NODE_BIN="${NODE_DIR}/current/bin/node"
 NPM_BIN="${NODE_DIR}/current/bin/npm"

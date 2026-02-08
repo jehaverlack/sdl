@@ -5,8 +5,8 @@
 | **Author** | John Haverlack |
 | **Copyright** | 2026 John Haverlack |
 | **License** | MIT |
-| **Version** | 0.3.7 |
-| **Date** | 2026-02-01 |
+| **Version** | 0.3.8 |
+| **Date** | 2026-02-08 |
 
 ## Overview
 
@@ -14,31 +14,118 @@ The Software Defined Laboratory (SDL) project provides a generalized distributed
 
 # Roadmap
 
-## Status
-
-- [x] sdl-mgr MQTT Broker
-- [x] sdl-mgr UDP Beacon
-- [x] sdl-mgr Web UI MQTT WebSocket Pub/Sub
-- [x] sdl-wkr UDP Listener
-
-
 ## Prioritized Tasks
 
 MVP - Minimum Viable Product Task List
 
+**Core Infrastructure** ✅ (Complete)
+- [x] sdl-mgr MQTT Broker
+- [x] sdl-mgr UDP Beacon
+- [x] sdl-mgr Web UI MQTT WebSocket Pub/Sub
+- [x] sdl-wkr UDP Listener
 - [x] SDL_ID Node ID
 - [x] Version Updater Script
-- [x] Deploy sld-mgr to $SDL_HOME/sdl-mgr
+- [x] Deploy sdl-mgr to $SDL_HOME/sdl-mgr
 - [x] Create SDL Worker Dist Build Process
 - [x] Create SDL Worker Install to $SDL_HOME
 - [x] SDL Install Script
-- [ ] Create SDL Worker Auto Update Process
+- [x] Create SDL Worker Auto Update Process
 - [x] Create Worker Join Process
-- [ ] Create Worker Telementry Process
+- [x] Create Worker Telemetry Process
+
+**Worker Monitoring & Telemetry** 🔄 (In Progress)
+- [x] Worker Hardware Inventory Detection
+  - [x] Physical vs Logical CPU cores (hyperthreading)
+  - [x] Physical vs VM detection (hypervisor flag)
+  - [x] GPU VRAM capacity aggregation
+  - [x] Memory capacity (bytes → GB conversion)
+- [x] Worker Real-time Load Status (pure Node.js)
+  - [x] CPU usage percentage (`os.cpus()` times)
+  - [x] RAM usage (total/free/used via `os.totalmem()/freemem()`)
+  - [x] GPU usage (exec-based: nvidia-smi, rocm-smi)
+  - [ ] Disk IO (optional: exec-based)
+- [x] Worker Uptime Tracking
+  - [x] SDL process uptime (`process.uptime()`)
+  - [x] OS uptime (`os.uptime()`)
+- [ ] Worker Display Improvements
+  - [x] Show OS distro + version in Platform column (e.g., "Debian 12 / x64")
+  - [x] Show system type (Physical 🖥️ / VM 💠)
+  - [ ] Show GPU VRAM in GPU column (e.g., "2 GPUs (48 GB)")
+  - [x] Show worker uptime in dashboard
+  - [x] Display last seen as elapsed time in dashboard, not date
+  - [ ] Track Username for sdl process
+- [ ] Web UI
+  - [ ] Progresive Web App
+  - [ ] Editable Dashboard
+  - [x] Panel Icon
+
+
+**Resource Management**
+- [ ] CPU Reserve Capacity Allocation
+  - [ ] Config option: `reserve_cpus: N` (keep N cores for system)
+  - [ ] Track: `total`, `reserved`, `allocated`, `available`, `used`
+  - [ ] Display reserved capacity in dashboard
+- [ ] Memory Reserve Capacity (optional, future)
+- [ ] GPU Reserve Capacity (optional, future)
+
+**Service Management**
+- [x] Start/Stop shell scripts (for systems without systemd user services)
+  - [x] `start-sdl-mgr.sh` / `stop-sdl-mgr.sh`
+  - [x] `start-sdl-wkr.sh` / `stop-sdl-wkr.sh`
+- [ ] Combined systemd service
+  - [ ] `sdl.service` to manage both sdl-mgr and sdl-wkr together
+  - [ ] Support for system-level (sudo) and user-level services
+- [ ] SDL-MGR auto-installs SDL-WKR
+  - [ ] Manager node becomes worker by default
+  - [ ] Config flag to disable: `install_worker_on_manager: false
+  - [x] Pass HTTP Port to SDL-WKR Curl installer
+  - [ ] Update Install Summary
+  - [ ] Add Quite Mode to sdl-wkr install
+
+
+
+**Data & Storage**
 - [ ] Data Storage Organizational Structure
-- [ ] MinIO S3 Storage Server
-- [ ] Worker Telemetry Hardware Inventory (CPU, RAM, GPU, etc)
-- [ ] Worker Telementry Load Status (CPU, RAM, GPU, Disk IO, etc)
+  - [ ] Define directory hierarchy for tasks, results, logs
+  - [ ] Implement file naming conventions
+  - [ ] Add cleanup/retention policies
+- [ ] MinIO S3 Storage Server Integration
+  - [ ] Install and configure MinIO
+  - [ ] S3 bucket structure for SDL data
+  - [ ] Worker access to S3 storage
+  - [ ] Web UI S3 browser integration
+
+**Projects**
+- [ ] Project Management Org Structure
+  - [ ] Define project metadata schema
+  - [ ] Project lifecycle states (draft, active, archived)
+  - [ ] Permission/access control model
+- [ ] Experiment Organization under Org Structure
+  - [ ] Experiment templates
+  - [ ] Parameter tracking
+  - [ ] Result linking to experiments
+- [ ] HPC Experiment Binary Development
+  - [ ] sdl-wkr Capablity detection (phyton, etc)
+  - [ ] Binary packaging format
+  - [ ] Dependency management
+  - [ ] Version control for binaries
+
+**Dashboard Enhancements**
+- [x] Dark/Light theme polish (CSS refinements)
+- [ ] Real-time resource graphs (Chart.js)
+- [ ] Worker status history timeline
+- [ ] Cluster health indicators
+- [ ] Alert/notification system for worker failures
+- [ ] Add a Clock to the Dashboard (ISO 8601)
+
+**Testing & Documentation**
+- [ ] Cross-platform testing (Debian, Ubuntu, Arch, Fedora, Win, OSx, BSD)
+- [ ] Installation documentation
+- [ ] Configuration examples
+- [ ] Troubleshooting guide
+- [ ] Validate IP change Stablity
+
+---
 
 # Design
 

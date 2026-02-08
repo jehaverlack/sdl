@@ -5,8 +5,8 @@
     "update_interval": {
         "udp_beacon": 2000,
         "cluster_status": 10000,
-        "cluster_workers": 10000,
-        "cluster_telemetry": 3000
+        "cluster_workers": 2000,
+        "cluster_telemetry": 1000
     },
     "expiration_timeout": {
         "cluster_status": 60000,

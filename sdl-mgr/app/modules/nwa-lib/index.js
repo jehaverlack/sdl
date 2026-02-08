@@ -605,7 +605,7 @@ function getUptimeDHMS() {
   const h = Math.floor((uptimeSec % 86400) / 3600);
   const m = Math.floor((uptimeSec % 3600) / 60);
   const s = Math.floor(uptimeSec % 60);
-  return `${d}:${h}:${m}:${s}`;
+  return `${d}d ${h}h ${m}m ${s}s`;
 }
 
 

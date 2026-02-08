@@ -500,53 +500,118 @@ function renderWorkersTable(msg) {
   html += '<table class="table table-sm table-striped table-hover">';
   html += '<thead>';
   html += '<tr>';
-  html += '<th>Hostname</th>';
+  html += '<th>System</th>';
   html += '<th>Status</th>';
   html += '<th><i class="fa fa-microchip"></i> CPU</th>';
   html += '<th><i class="fa fa-memory"></i> RAM</th>';
   html += '<th><i class="fa fa-dice-d20"></i> GPU</th>';
-  html += '<th>Platform</th>';
-  html += '<th>Last Seen</th>';
   html += '</tr>';
   html += '</thead>';
   html += '<tbody>';
 
-  for (const [sdl_id, worker] of Object.entries(workers)) {
-    const status = worker.status === 'active'
-      ? '<span class="badge bg-success">Active</span>'
-      : '<span class="badge bg-secondary">Inactive</span>';
+  const nowSec = Math.floor(Date.now() / 1000);
+  const staleThresholdSec = 60;
 
+  for (const [sdl_id, worker] of Object.entries(workers)) {
+    const ageSec = nowSec - worker.last_seen_utime;
+    const isActive = ageSec <= staleThresholdSec;
+    
+    // Status badge
+    const statusBadge = isActive
+      ? '<span class="badge bg-success">Active</span>'
+      : '<span class="badge bg-danger">Inactive</span>';  // ✅ Red instead of grey
+
+    // Hardware info
+    const hwType = worker.hardware?.type || 'unknown';
+    const hwIcon = hwType === 'hw' ? '🖥️' : hwType === 'vm' ? '💠' : '❓';
+    const hwManuf = worker.hardware?.manufacturer || 'Unknown';
+    const hwModel = worker.hardware?.model || 'Unknown';
+    
+    // ✅ Full hardware display with model
+    const hardwareDisplay = hwType === 'vm' 
+      ? `${hwIcon} ${hwModel}` 
+      : `${hwIcon} ${hwManuf} ${hwModel}`;
+
+    // ✅ OS info
+    const osDistro = worker.distro || 'Unknown';
+    const osArch = worker.arch || 'unknown';
+    const osPlatform = worker.platform || 'unknown';      
+
+    // CPU
     const cpuAvail = worker.resources?.cpus?.available || 0;
     const cpuTotal = worker.resources?.cpus?.allocated || 0;
-    const cpuUsed = worker.resources?.cpus?.used || 0;
+    const cpuUsed = worker.usage?.cpu?.total || 0;
 
+    // Memory
     const memAvail = worker.resources?.memory?.available || 0;
     const memTotal = worker.resources?.memory?.allocated || 0;
-    const memUsed = worker.resources?.memory?.used || 0;
+    const memUsed = worker.usage?.memory?.used || 0;
     
-    // Convert bytes to GB
     const memAvailGB = Math.round(memAvail / (1024 * 1024 * 1024));
     const memTotalGB = Math.round(memTotal / (1024 * 1024 * 1024));
-    const memUsedGB = memUsed > 0 ? Math.round(memUsed / (1024 * 1024 * 1024)) : 0;
+    const memPercent = worker.usage?.memory?.percent_used || 0;
 
+    // GPU
     const gpuAvail = worker.resources?.gpus?.available || 0;
     const gpuTotal = worker.resources?.gpus?.allocated || 0;
-    const gpuUsed = worker.resources?.gpus?.used || 0;
+    const gpuData = worker.usage?.gpu;
+    const gpuUsed = gpuData?.total_utilization || 0;
+    const gpuMemMB = gpuData?.total_memory_total_mb || 0;
+    const gpuMemGB = Math.round(gpuMemMB / 1024);
 
-    const platform = `${worker.platform || 'unknown'} / ${worker.arch || 'unknown'}`;
+    // Uptime
+    const procUptime = worker.uptime?.proc_dhms || 'N/A';
+    const sysUptime = worker.uptime?.sys_dhms || 'N/A';
     
-    const lastSeen = worker.last_seen 
-      ? new Date(worker.last_seen).toLocaleString()
-      : 'N/A';
+    // ✅ Last seen age
+    const days = Math.floor(ageSec / 86400);
+    const hours = Math.floor((ageSec % 86400) / 3600);
+    const minutes = Math.floor((ageSec % 3600) / 60);
+    const seconds = Math.floor(ageSec % 60);
+    
+    let lastSeenAge = '';
+    if (days > 0) lastSeenAge += `${days}d `;
+    if (hours > 0 || days > 0) lastSeenAge += `${hours}h `;
+    if (minutes > 0 || hours > 0 || days > 0) lastSeenAge += `${minutes}m `;
+    lastSeenAge += `${seconds}s ago`;
 
     html += '<tr>';
-    html += `<td><strong>${worker.hostname}</strong><br><small class="text-muted">${worker.sdl_id}</small></td>`;
-    html += `<td>${status}</td>`;
-    html += `<td><span class="dash-val">${cpuAvail}</span> / ${cpuTotal}${cpuUsed > 0 ? `<br><small>(${cpuUsed} used)</small>` : ''}</td>`;
-    html += `<td><span class="dash-val">${memAvailGB}</span> / ${memTotalGB} GB${memUsedGB > 0 ? `<br><small>(${memUsedGB} GB used)</small>` : ''}</td>`;
-    html += `<td><span class="dash-val">${gpuAvail}</span> / ${gpuTotal}${gpuUsed > 0 ? `<br><small>(${gpuUsed} used)</small>` : ''}</td>`;
-    html += `<td><small>${platform}</small></td>`;
-    html += `<td><small>${lastSeen}</small></td>`;
+    
+    // ✅ Hostname column with hardware underneath
+    html += `<td>
+      <strong>${worker.hostname}</strong><br>
+      <small class="text-muted" style="font-size:0.7em">${worker.sdl_id}</small><br>
+      <small class="text-muted" style="font-size:0.8em">${hardwareDisplay}</small><br>
+      <small class="text-muted" style="font-size:0.8em">${osDistro} ${osArch} ${osPlatform}</small>
+    </td>`;
+    
+    // ✅ Status column with uptime and last seen
+    html += `<td>
+      ${statusBadge}<br>
+      <small class="text-muted">SDL: ${procUptime}</small><br>
+      <small class="text-muted">OS: ${sysUptime}</small><br>
+      <small class="text-muted">${lastSeenAge}</small>
+    </td>`;
+    
+    // CPU
+    html += `<td>
+      <span class="dash-val">${cpuAvail}</span> / ${cpuTotal}
+      ${cpuUsed > 0 ? `<br><small class="text-muted">${cpuUsed}% load</small>` : ''}
+    </td>`;
+    
+    // Memory
+    html += `<td>
+      <span class="dash-val">${memAvailGB}</span> / ${memTotalGB} GB
+      ${memPercent > 0 ? `<br><small class="text-muted">${memPercent}% used</small>` : ''}
+    </td>`;
+    
+    // GPU
+    html += `<td>
+      <span class="dash-val">${gpuAvail}</span> / ${gpuTotal}
+      ${gpuMemGB > 0 ? `<br><small class="text-muted">(${gpuMemGB} GB)</small>` : ''}
+      ${gpuUsed > 0 ? `<br><small class="text-muted">${gpuUsed}% load</small>` : ''}
+    </td>`;
+    
     html += '</tr>';
   }
 

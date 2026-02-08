@@ -12,7 +12,7 @@ log('===========================================================================
 log(config.package.name + ': STARTING: ' + config.package.description + ' v' + config.package.version);
 // log(JSON.stringify(config, null, 2));
 // log(JSON.stringify(config.dirs, null, 2), false);
-log(JSON.stringify(config.host, null, 2), false);
+// log(JSON.stringify(config.host, null, 2), false);
 
 for (let m in config.modules) {
     // log(`Loading module: ${m}`);

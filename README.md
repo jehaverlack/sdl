@@ -5,14 +5,17 @@
 | **Author** | John Haverlack |
 | **Copyright** | 2026 John Haverlack |
 | **License** | MIT |
-| **Version** | 0.3.7 |
-| **Date** | 2026-02-01 |
+| **Version** | 0.3.8 |
+| **Date** | 2026-02-08 |
 
 ## Overview
 
 The Software Defined Laboratory (SDL) project provides a generalized distributed computing platform for managing parallel computational workflows across a cluster of distributed nodes.  SDL is a minimalistic High Performance Compute (HPC) platform focused on minimizaton of technical debt associated configuration, deployability, and maintenance of the cluster.
 
 ## Design
+
+![SDL Dashboard](docs/lib/img/sdl-dash.png)
+![SDL About](docs/lib/img/sdl-about.png)
 
 For more information, see the [Design](docs/DESIGN.md) document.
 
@@ -45,6 +48,12 @@ Listen to UDP 10101 for beacon messages broadcast by your SDL Manager.
 
 ```
 nc -u -l -k 10101 |jq
+```
+
+Or to get the install command from the beacon message:
+
+```
+nc -u -l -k 10101 | jq -r '.msg.sdl_wkr_install_cmd[]'
 ```
 
 > NOTE: CTRL-C to exit `nc`.  You cannot run `nc` on port 10101 in parallel with the sdl-wkr.  So run it once to get the install command.  Tnen install sdl-wkr.

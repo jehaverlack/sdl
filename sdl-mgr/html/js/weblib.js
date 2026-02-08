@@ -371,53 +371,98 @@ function loadNavTabs() {
   // ===============================
 // Side Panel (layout-collapsing)
 // ===============================
-async function loadSidePanel() {
-  // console.log('DEBUG: loadSidePanel() called');
+// async function loadSidePanel() {
+//   // console.log('DEBUG: loadSidePanel() called');
 
+//   const panel = document.getElementById('sidepanel');
+//   const inner = document.getElementById('sidepanel-inner');
+//   const toggleBtn = document.getElementById('sidepanel-toggle');
+
+//   if (!panel || !inner || !toggleBtn) return;
+
+//   const currentPage =
+//     new URLSearchParams(window.location.search).get('page') || 'index';
+
+//   const isCollapsed =
+//     localStorage.getItem('sidepanel_collapsed') === 'true';
+
+//   if (isCollapsed) {
+//     panel.classList.add('collapsed');
+//     // toggleBtn.innerHTML = `<i class="fa-solid fa-folder-plus"></i>`;
+//     toggleBtn.innerHTML = '<i class="bi bi-layout-sidebar"></i>';
+//   } else {
+//     // toggleBtn.innerHTML = `<i class="fa-solid fa-folder-minus"></i>`;
+//     toggleBtn.innerHTML = '<i class="bi bi-layout-sidebar-reverse"></i>';
+//   }
+
+//   try {
+//     const res = await fetch('/api/nav/sidepanel');
+//     if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+//     const sideNav = await res.json();
+
+//     renderAllSidePanelSections(inner, sideNav, currentPage);
+//   } catch (err) {
+//     console.error('Failed to load side panel:', err);
+//     inner.innerHTML = '';
+//   }
+
+//   // Collapse / expand behavior
+//   toggleBtn.onclick = () => {
+//     const collapsed = panel.classList.toggle('collapsed');
+//     localStorage.setItem('sidepanel_collapsed', collapsed);
+
+//     // toggleBtn.innerHTML = `
+//     //   <i class="fa-solid ${
+//     //     collapsed ? 'fa-folder-plus' : 'fa-folder-minus'
+//     //   }"></i>
+//     // `;
+
+//     toggleBtn.innerHTML = `
+//       <i class="bi ${
+//         collapsed ? 'bi-layout-sidebar' : 'bi-layout-sidebar-reverse'
+//       }"></i>
+//     `;
+//   };
+// }
+async function loadSidePanel() {
   const panel = document.getElementById('sidepanel');
   const inner = document.getElementById('sidepanel-inner');
   const toggleBtn = document.getElementById('sidepanel-toggle');
-
+  
   if (!panel || !inner || !toggleBtn) return;
-
+  
   const currentPage =
     new URLSearchParams(window.location.search).get('page') || 'index';
-
   const isCollapsed =
     localStorage.getItem('sidepanel_collapsed') === 'true';
-
+  
   if (isCollapsed) {
     panel.classList.add('collapsed');
-    toggleBtn.innerHTML = `<i class="fa-solid fa-folder-plus"></i>`;
+    toggleBtn.innerHTML = '<i class="bi bi-layout-sidebar"></i>';
   } else {
-    toggleBtn.innerHTML = `<i class="fa-solid fa-folder-minus"></i>`;
+    toggleBtn.innerHTML = '<i class="bi bi-layout-sidebar-reverse"></i>';
   }
-
+  
   try {
     const res = await fetch('/api/nav/sidepanel');
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);  // ✅ Fixed template literal
     const sideNav = await res.json();
-
     renderAllSidePanelSections(inner, sideNav, currentPage);
   } catch (err) {
     console.error('Failed to load side panel:', err);
     inner.innerHTML = '';
   }
-
+  
   // Collapse / expand behavior
   toggleBtn.onclick = () => {
     const collapsed = panel.classList.toggle('collapsed');
     localStorage.setItem('sidepanel_collapsed', collapsed);
-
     toggleBtn.innerHTML = `
-      <i class="fa-solid ${
-        collapsed ? 'fa-folder-plus' : 'fa-folder-minus'
-      }"></i>
+      <i class="bi ${collapsed ? 'bi-layout-sidebar' : 'bi-layout-sidebar-reverse'}"></i>
     `;
   };
 }
-
 
 // -------------------------------
 // Find matching section by page
