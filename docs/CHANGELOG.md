@@ -10,6 +10,9 @@
 
 ## v0.3.9 - 2026-02-08 (ALPHA)
 
+- Refactor Cluster Status Dash
+- Refactor Cluster Status Dash
+- System Columnn Display
 - Start v0.3.9
 
 ## v0.3.8 - 2026-02-01 (ALPHA)
