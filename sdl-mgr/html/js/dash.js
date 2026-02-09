@@ -513,57 +513,65 @@ function renderWorkersTable(msg) {
   const staleThresholdSec = 60;
 
   for (const [sdl_id, worker] of Object.entries(workers)) {
-    const ageSec = nowSec - worker.last_seen_utime;
+    const ageSec = nowSec - worker.ts_utime;  // ✅ Use ts_utime from telemetry
     const isActive = ageSec <= staleThresholdSec;
     
     // Status badge
     const statusBadge = isActive
       ? '<span class="badge bg-success">Active</span>'
-      : '<span class="badge bg-danger">Inactive</span>';  // ✅ Red instead of grey
+      : '<span class="badge bg-danger">Inactive</span>';
 
-    // Hardware info
-    const hwType = worker.hardware?.type || 'unknown';
-    const hwIcon = hwType === 'hw' ? '🖥️' : hwType === 'vm' ? '💠' : '❓';
-    const hwManuf = worker.hardware?.manufacturer || 'Unknown';
-    const hwModel = worker.hardware?.model || 'Unknown';
+    // ✅ Hardware info from nested msg.system.hardware
+    const hwType = worker.msg?.system?.hardware?.type || 'unknown';
+    // const hwIcon = hwType === 'hw' ? '🖥️' : hwType === 'vm' ? '💠' : '❓';
+    const hwIcon = hwType === 'hw' ? '<i class="fa fa-desktop"></i>' : 
+               hwType === 'vm' ? '<i class="fa fa-cube"></i>' : 
+               '<i class="fa fa-question"></i>';
+    const hwManuf = worker.msg?.system?.hardware?.manufacturer || 'Unknown';
+    const hwModel = worker.msg?.system?.hardware?.model || 'Unknown';
+    const hwCPU = worker.msg?.system?.hardware?.cpu || 'Unknown';
     
-    // ✅ Full hardware display with model
     const hardwareDisplay = hwType === 'vm' 
       ? `${hwIcon} ${hwModel}` 
       : `${hwIcon} ${hwManuf} ${hwModel}`;
 
-    // ✅ OS info
-    const osDistro = worker.distro || 'Unknown';
-    const osArch = worker.arch || 'unknown';
-    const osPlatform = worker.platform || 'unknown';      
+    // ✅ OS info from nested msg.system
+    const osDistro = worker.msg?.system?.distro.replace(/\(\S+\)/, '') || 'Unknown';
+    const osArch = worker.msg?.system?.arch || 'unknown';
+    const osPlatform = worker.msg?.system?.platform || 'unknown';
+    const platformIcon = osPlatform === 'linux' ? '<i class="fab fa-linux"></i>' : 
+                     osPlatform === 'win32' ? '<i class="fab fa-windows"></i>' : 
+                     osPlatform === 'darwin' ? '<i class="fab fa-apple"></i>' : 
+                     '<i class="fa fa-question"></i>';
 
-    // CPU
-    const cpuAvail = worker.resources?.cpus?.available || 0;
-    const cpuTotal = worker.resources?.cpus?.allocated || 0;
-    const cpuUsed = worker.usage?.cpu?.total || 0;
+    const osDisplay = `${platformIcon} ${osDistro} (${osArch})`;
 
-    // Memory
-    const memAvail = worker.resources?.memory?.available || 0;
-    const memTotal = worker.resources?.memory?.allocated || 0;
-    const memUsed = worker.usage?.memory?.used || 0;
+    // ✅ CPU from nested msg.resources and msg.usage
+    const cpuAvail = worker.msg?.resources?.cpus?.available || 0;
+    const cpuTotal = worker.msg?.resources?.cpus?.allocated || 0;
+    const cpuUsed = worker.msg?.usage?.cpu?.total || 0;
+
+    // ✅ Memory from nested msg
+    const memAvail = worker.msg?.resources?.memory?.available || 0;
+    const memTotal = worker.msg?.resources?.memory?.allocated || 0;
     
     const memAvailGB = Math.round(memAvail / (1024 * 1024 * 1024));
     const memTotalGB = Math.round(memTotal / (1024 * 1024 * 1024));
-    const memPercent = worker.usage?.memory?.percent_used || 0;
+    const memPercent = worker.msg?.usage?.memory?.percent_used || 0;
 
-    // GPU
-    const gpuAvail = worker.resources?.gpus?.available || 0;
-    const gpuTotal = worker.resources?.gpus?.allocated || 0;
-    const gpuData = worker.usage?.gpu;
+    // ✅ GPU from nested msg
+    const gpuAvail = worker.msg?.resources?.gpus?.available || 0;
+    const gpuTotal = worker.msg?.resources?.gpus?.allocated || 0;
+    const gpuData = worker.msg?.usage?.gpu;
     const gpuUsed = gpuData?.total_utilization || 0;
     const gpuMemMB = gpuData?.total_memory_total_mb || 0;
     const gpuMemGB = Math.round(gpuMemMB / 1024);
 
-    // Uptime
-    const procUptime = worker.uptime?.proc_dhms || 'N/A';
-    const sysUptime = worker.uptime?.sys_dhms || 'N/A';
+    // ✅ Uptime from nested msg.uptime
+    const procUptime = worker.msg?.uptime?.proc_dhms || 'N/A';
+    const sysUptime = worker.msg?.uptime?.sys_dhms || 'N/A';
     
-    // ✅ Last seen age
+    // Last seen age
     const days = Math.floor(ageSec / 86400);
     const hours = Math.floor((ageSec % 86400) / 3600);
     const minutes = Math.floor((ageSec % 3600) / 60);
@@ -577,15 +585,16 @@ function renderWorkersTable(msg) {
 
     html += '<tr>';
     
-    // ✅ Hostname column with hardware underneath
+    // System column
     html += `<td>
-      <strong>${worker.hostname}</strong><br>
-      <small class="text-muted" style="font-size:0.7em">${worker.sdl_id}</small><br>
+      <strong>${worker.host}</strong><br>
+      <small class="text-muted" style="font-size:0.7em">${worker.sdl_id.substring(0, 8)}...</small><br>
       <small class="text-muted" style="font-size:0.8em">${hardwareDisplay}</small><br>
-      <small class="text-muted" style="font-size:0.8em">${osDistro} ${osArch} ${osPlatform}</small>
+      <small class="text-muted" style="font-size:0.75em"><i title="CPU" class="fa fa-microchip"></i> <i class="fa fa-memory"></i> <span class="dash-val" style="font-weight:bold">${memTotalGB}</span> GB | <span class="dash-val" style="font-weight:bold"> ${cpuTotal}</span>x ${hwCPU}} </small><br>
+      <small class="text-muted" style="font-size:0.75em">${osDisplay}</small>
     </td>`;
     
-    // ✅ Status column with uptime and last seen
+    // Status column
     html += `<td>
       ${statusBadge}<br>
       <small class="text-muted">SDL: ${procUptime}</small><br>

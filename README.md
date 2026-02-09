@@ -56,7 +56,14 @@ Or to get the install command from the beacon message:
 nc -u -l -k 10101 | jq -r '.msg.sdl_wkr_install_cmd[]'
 ```
 
-> NOTE: CTRL-C to exit `nc`.  You cannot run `nc` on port 10101 in parallel with the sdl-wkr.  So run it once to get the install command.  Tnen install sdl-wkr.
+**NOTE**: If you use UFW or a local firewall, you must allow SDL Worker to listen on UDP port 10101.
+
+```
+sudo ufw allow in proto udp from <NETWORK CIDR> to any port 10101
+```
+
+> **NOTE**: CTRL-C to exit `nc`.  You cannot run `nc` on port 10101 in parallel with the sdl-wkr.  So run it once to get the install command.  Tnen install sdl-wkr.
+
 
 Run the **curl** or **wget** command provided by SDL Manager UDP beacon to install SDL Worker locally.
 

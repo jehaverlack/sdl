@@ -391,9 +391,13 @@ function publishTelemetry(topic) {
     ? Math.round(perCpuUsage.reduce((sum, usage) => sum + usage, 0) / perCpuUsage.length)
     : 0;
 
+  const now = new Date();
+  
   const telemetry = {
-    ts: new Date().toISOString(),
+    ts: now.toISOString(),
+    ts_utime: Math.floor(now.getTime() / 1000), 
     sdl_id: config.identity.sdl_id,
+    sdl_ver: config.sdl.version,
     role: 'sdl-wkr',
     host: config.identity.hostname,
     type: 'worker-telemetry',
@@ -511,7 +515,8 @@ function getSystemHardware() {
   const hardware = {
     type: 'unknown',
     manufacturer: 'Unknown',
-    model: 'Unknown'
+    model: 'Unknown',
+    cpu: config.host.cpu.model
   };
 
   // Only run Linux-specific detection on Linux
