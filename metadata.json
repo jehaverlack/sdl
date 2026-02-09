@@ -3,7 +3,7 @@
     "name": "sdl",
     "description": "Software Defined Laboratory",
     "abbr": "SDL",
-    "version": "0.3.8",
+    "version": "0.3.9",
     "version_date": "2026-02-08",
     "maturity": "ALPHA",
     "author": "John Haverlack",

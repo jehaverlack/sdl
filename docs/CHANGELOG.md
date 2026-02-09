@@ -5,11 +5,38 @@
 | **Author** | John Haverlack |
 | **Copyright** | 2026 John Haverlack |
 | **License** | MIT |
-| **Version** | 0.3.8 |
-| **Date** | 2026-02-01 |
+| **Version** | 0.3.9 |
+| **Date** | 2026-02-08 |
+
+## v0.3.9 - 2026-02-08 (ALPHA)
+
+- Refactor Cluster Status Dash
+- Refactor Cluster Status Dash
+- System Columnn Display
+- Start v0.3.9
 
 ## v0.3.8 - 2026-02-01 (ALPHA)
 
+- v0.3.8
+- Refactoing Worker Dashboard
+- Refactoing Worker Dashboard
+- Refactored Cluster Status
+- Refactor of telemetry format + hw detection
+- Switched Panel Icon to Bootstrap Icon
+- Updating Worker Telemetry
+- CP
+- Fixing Wget/Curl Command Installer Port
+- Fixing Wget/Curl Command Installer Port
+- Fixing Wkr Start / Stop
+- Update stop-sdl-wkr.sh
+- WIP Install / Start / Stop
+- WIP Install / Start /Stop
+- Systemd Detectiion in Start/Stop/Status
+- WIP: Start / Stop Scripts
+- Non Systemd start stop scripts
+- WIP: start stop scripts
+- Updating Task List
+- Adding Screeshot to README
 - Start v0.3.8
 
 ## v0.3.7 - 2026-02-01 (ALPHA)

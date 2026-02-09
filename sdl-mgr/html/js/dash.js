@@ -54,14 +54,14 @@ if (Array.isArray(config.host.gpu) && config.host.gpu.length > 0) {
 
 // Hostinfo: hostname, cpu, cores, ram, os
 const hostinfo = {
-    "hostname": '<span class="dash-val">' + config.host.hostname + '</span>',
     "sdl_id": '<span class="dash-val" style=" font-size:0.8em">' + config.identity.sdl_id + '</span>',
-    "cpu cores": '<span class="dash-val">' + config.host.cpu.cores_logical + '</span> <span style="font-size:0.7em">' + config.host.cpu.model + '</span>',
-    // "cores": config.host.cpu.cores_logical,
-    "ram": '<span class="dash-val">' + config.host.memory.total_gb + '</span> GB ',
-    "gpu": gpuSummary,
-    "net": "",
-    "os": config.host.os.pretty_name
+    "hostname": '<span class="dash-val">' + config.host.hostname + '</span>',
+    // "cpu cores": '<span class="dash-val">' + config.host.cpu.cores_logical + '</span> <span style="font-size:0.7em">' + config.host.cpu.model + '</span>',
+    // // "cores": config.host.cpu.cores_logical,
+    // "ram": '<span class="dash-val">' + config.host.memory.total_gb + '</span> GB ',
+    // "gpu": gpuSummary,
+    // "net": "",
+    // "os": config.host.os.pretty_name
 }
 
 
@@ -70,7 +70,7 @@ for (let intf in config.host.network) {
     if (intf != 'lo') {
       for (let addr in config.host.network[intf]) {
         if (config.host.network[intf][addr].family == 'IPv4') {
-          hostinfo["net"] += '<span class="dash-val" style=" font-size: 0.9em">' + config.host.network[intf][addr].cidr + '</span><br> ';
+          hostinfo["net"] += '<span class="dash-val" style=" font-size: 0.9em">' + config.host.network[intf][addr].cidr + '</span>  ';
         }
       }
     }    
@@ -79,12 +79,7 @@ for (let intf in config.host.network) {
 
 let host_html = '<h5>Manager</h5>\n';
 host_html += '<table class="table table-sm table-striped">\n';
-// host_html += '<thead>\n';
-// host_html += '<tr>\n';
-// host_html += '<th>Key</th>\n';
-// host_html += '<th>Value</th>\n';
-// host_html += '</tr>\n';
-// host_html += '</thead>\n';
+
 host_html += '<tbody>\n';
 
 for (let key in hostinfo) {
@@ -97,7 +92,7 @@ for (let key in hostinfo) {
 host_html += '</tbody>\n';
 host_html += '</table>\n';
 
-document.getElementById('dash-sdl-mgr-info').innerHTML = host_html;
+// document.getElementById('dash-sdl-mgr-info').innerHTML = host_html;
 
 initMqtt();
 
@@ -245,9 +240,11 @@ async function initMqtt() {
         lastSdlStatus = msg;
         lastSdlTimestamp = Date.parse(msg.ts);
         renderModulesTable(msg);
+        // renderClusterSummary(msg);
       } else if (msg.type === 'cluster-workers') {
         lastWorkers = msg;
         renderWorkersTable(msg);
+        renderClusterSummary(msg);
       }
 
     } catch (e) {
@@ -302,109 +299,78 @@ function renderModulesTable(msg) {
   //     </tr>
   //   `;
 
-  sdl_html += `
-      <tr>
-        <th>Name</th>
-        <td class="dash-val" style=" font-size:1em">${msg.msg.cluster.name}</td>
-      </tr>
-    `;
-
-  sdl_html += `
-      <tr>
-        <th>Description</th>
-        <td class="dash-val" style=" font-size:0.8em">${msg.msg.cluster.desc}</td>
-      </tr>
-    `;
-
-  // Workers stats
-  const workers = msg.msg.workers || { allocated: 0, available: 0, used: 0 };
-  sdl_html += `
-      <tr>
-        <th>SDL Workers</th>
-        <td class="dash-val" style="font-size:1em">
-          <span class="dash-val">${workers.available}</span>
-        </td>
-      </tr>
-    `;
   // sdl_html += `
   //     <tr>
-  //       <th>SDL Workers (active/total)</th>
+  //       <th>Name</th>
+  //       <td class="dash-val" style=" font-size:1em">${msg.msg.cluster.name}</td>
+  //     </tr>
+  //   `;
+
+  // sdl_html += `
+  //     <tr>
+  //       <th>Description</th>
+  //       <td class="dash-val" style=" font-size:0.8em">${msg.msg.cluster.desc}</td>
+  //     </tr>
+  //   `;
+
+  // Workers stats
+  // const workers = msg.msg.workers || { allocated: 0, available: 0, used: 0 };
+  // sdl_html += `
+  //     <tr>
+  //       <th>SDL Workers</th>
   //       <td class="dash-val" style="font-size:1em">
-  //         <span class="dash-val">${workers.available}</span> / ${workers.allocated}
+  //         <span class="dash-val">${workers.available}</span>
   //       </td>
   //     </tr>
   //   `;
 
+
   // CPU resources
-  const cpus = msg.msg.resources?.cpus || { allocated: 0, available: 0, used: 0 };
-  sdl_html += `
-      <tr>
-        <th><span class="fa fa-microchip" title="CPU Cores" style="font-size:1.2em"></span> CPU Cores</th>
-        <td class="dash-val" style="font-size:1em">
-          <span class="dash-val">${cpus.available}</span>
-        </td>
-      </tr>
-    `;
+  // const cpus = msg.msg.resources?.cpus || { allocated: 0, available: 0, used: 0 };
   // sdl_html += `
   //     <tr>
   //       <th><span class="fa fa-microchip" title="CPU Cores" style="font-size:1.2em"></span> CPU Cores</th>
   //       <td class="dash-val" style="font-size:1em">
-  //         <span class="dash-val">${cpus.available}</span> / ${cpus.allocated}
-  //         ${cpus.used > 0 ? `<span style="font-size:0.8em">(${cpus.used} in use)</span>` : ''}
+  //         <span class="dash-val">${cpus.available}</span>
   //       </td>
   //     </tr>
   //   `;
 
-  // Memory resources
-  const memory = msg.msg.resources?.memory || { allocated: 0, available: 0, used: 0 };
-  const memAllocGB = Math.round(memory.allocated / (1024 * 1024 * 1024));
-  const memAvailGB = Math.round(memory.available / (1024 * 1024 * 1024));
-  const memUsedGB = memory.used > 0 ? Math.round(memory.used / 1024) : 0;
   
-  sdl_html += `
-    <tr>
-      <th><span class="fa fa-memory" title="RAM" style="font-size:1.2em"></span> RAM</th>
-      <td class="dash-val" style="font-size:1em">
-        <span class="dash-val">${memAvailGB}</span> GB
-      </td>
-    </tr>
-  `;
+  // Memory resources
+  // const memory = msg.msg.resources?.memory || { allocated: 0, available: 0, used: 0 };
+  // const memAllocGB = Math.round(memory.allocated / (1024 * 1024 * 1024));
+  // const memAvailGB = Math.round(memory.available / (1024 * 1024 * 1024));
+  // const memUsedGB = memory.used > 0 ? Math.round(memory.used / 1024) : 0;
+  
   // sdl_html += `
-  //     <tr>
-  //       <th><span class="fa fa-memory" title="RAM" style="font-size:1.2em"></span> RAM (GB)</th>
-  //       <td class="dash-val" style="font-size:1em">
-  //         <span class="dash-val">${memAvailGB}</span> / ${memAllocGB} GB
-  //         ${memUsedGB > 0 ? `<span style="font-size:0.8em">(${memUsedGB} GB in use)</span>` : ''}
-  //       </td>
-  //     </tr>
-  //   `;
+  //   <tr>
+  //     <th><span class="fa fa-memory" title="RAM" style="font-size:1.2em"></span> RAM</th>
+  //     <td class="dash-val" style="font-size:1em">
+  //       <span class="dash-val">${memAvailGB}</span> GB
+  //     </td>
+  //   </tr>
+  // `;
 
+  
   // GPU resources
-  const gpus = msg.msg.resources?.gpus || { allocated: 0, available: 0, used: 0 };
-  sdl_html += `
-      <tr>
-        <th><span class="fa fa-dice-d20" title="GPU" style="font-size:1.2em"></span> GPU (VRAM)</th>
-        <td class="dash-val" style="font-size:1em">
-          <span class="dash-val">${gpus.available}</span>
-        </td>
-      </tr>
-    `;
+  // const gpus = msg.msg.resources?.gpus || { allocated: 0, available: 0, used: 0 };
   // sdl_html += `
   //     <tr>
-  //       <th><span class="fa fa-dice-d20" title="GPU" style="font-size:1.2em"></span> GPU</th>
+  //       <th><span class="fa fa-dice-d20" title="GPU" style="font-size:1.2em"></span> GPU (VRAM)</th>
   //       <td class="dash-val" style="font-size:1em">
-  //         <span class="dash-val">${gpus.available}</span> / ${gpus.allocated}
-  //         ${gpus.used > 0 ? `<span style="font-size:0.8em">(${gpus.used} in use)</span>` : ''}
+  //         <span class="dash-val">${gpus.available}</span>
   //       </td>
   //     </tr>
   //   `;
-    
+ 
+  
   sdl_html += `
       </tbody>
     </table>
   `;
-  document.getElementById('dash-sdl-info').innerHTML = sdl_html;
 
+  sessionStorage.setItem('dash-sdl-uptime', msg.msg.sdl.uptime);
 
 
   const modules = msg.msg.modules;
@@ -431,7 +397,7 @@ function renderModulesTable(msg) {
     </table>
   `;
 
-  document.getElementById('dash-modules-list').innerHTML = html;
+  // document.getElementById('dash-modules-list').innerHTML = html;
 }
 
 
@@ -450,23 +416,33 @@ function startStatusAgeMonitor() {
 
     const ageMs = Date.now() - lastSdlTimestamp;
 
-    const ageEl = document.getElementById('dash-modules-age');
+    // const ageEl = document.getElementById('dash-modules-age');
 
+
+    // if (ageMs > maxAgeMs) {
+    //   ageEl.innerHTML =
+    //     `<span class="text-danger">
+    //        <i class="fa-solid fa-triangle-exclamation"></i>
+    //        SDL status stale (${Math.round(ageMs / 1000)}s)
+    //      </span>`;
+
+    //   markAllModulesDown();
+    // } else {
+    //   ageEl.innerHTML =
+    //     `<span class="dash-val">
+    //        <i class="fa-solid fa-circle-check"></i>
+    //        SDL online (${Math.round(ageMs / 1000)}s ago)
+    //      </span>`;
+    // }
+
+    // Save dash-sdl-status to Session Storage
     if (ageMs > maxAgeMs) {
-      ageEl.innerHTML =
-        `<span class="text-danger">
-           <i class="fa-solid fa-triangle-exclamation"></i>
-           SDL status stale (${Math.round(ageMs / 1000)}s)
-         </span>`;
-
-      markAllModulesDown();
+      sessionStorage.setItem('dash-sdl-status', '<span class="text-danger"><i class="fa-solid fa-triangle-exclamation"></i> ' + Math.round(ageMs / 1000) + 's ago' + '</span>');
     } else {
-      ageEl.innerHTML =
-        `<span class="dash-val">
-           <i class="fa-solid fa-circle-check"></i>
-           SDL online (${Math.round(ageMs / 1000)}s ago)
-         </span>`;
+      sessionStorage.setItem('dash-sdl-status', '<i class="fa-solid fa-circle-check"></i> ' + Math.round(ageMs / 1000) + 's ago');
     }
+
+    // sessionStorage.setItem('dash-sdl-status', Math.round(ageMs / 1000) + 's ago');
   }, 1000);
 }
 
@@ -513,57 +489,65 @@ function renderWorkersTable(msg) {
   const staleThresholdSec = 60;
 
   for (const [sdl_id, worker] of Object.entries(workers)) {
-    const ageSec = nowSec - worker.last_seen_utime;
+    const ageSec = nowSec - worker.ts_utime;  // ✅ Use ts_utime from telemetry
     const isActive = ageSec <= staleThresholdSec;
     
     // Status badge
     const statusBadge = isActive
       ? '<span class="badge bg-success">Active</span>'
-      : '<span class="badge bg-danger">Inactive</span>';  // ✅ Red instead of grey
+      : '<span class="badge bg-danger">Inactive</span>';
 
-    // Hardware info
-    const hwType = worker.hardware?.type || 'unknown';
-    const hwIcon = hwType === 'hw' ? '🖥️' : hwType === 'vm' ? '💠' : '❓';
-    const hwManuf = worker.hardware?.manufacturer || 'Unknown';
-    const hwModel = worker.hardware?.model || 'Unknown';
+    // ✅ Hardware info from nested msg.system.hardware
+    const hwType = worker.msg?.system?.hardware?.type || 'unknown';
+    // const hwIcon = hwType === 'hw' ? '🖥️' : hwType === 'vm' ? '💠' : '❓';
+    const hwIcon = hwType === 'hw' ? '<i class="fa fa-desktop"></i>' : 
+               hwType === 'vm' ? '<i class="fa fa-cube"></i>' : 
+               '<i class="fa fa-question"></i>';
+    const hwManuf = worker.msg?.system?.hardware?.manufacturer || 'Unknown';
+    const hwModel = worker.msg?.system?.hardware?.model || 'Unknown';
+    const hwCPU = worker.msg?.system?.hardware?.cpu || 'Unknown';
     
-    // ✅ Full hardware display with model
     const hardwareDisplay = hwType === 'vm' 
       ? `${hwIcon} ${hwModel}` 
       : `${hwIcon} ${hwManuf} ${hwModel}`;
 
-    // ✅ OS info
-    const osDistro = worker.distro || 'Unknown';
-    const osArch = worker.arch || 'unknown';
-    const osPlatform = worker.platform || 'unknown';      
+    // ✅ OS info from nested msg.system
+    const osDistro = worker.msg?.system?.distro.replace(/\(\S+\)/, '') || 'Unknown';
+    const osArch = worker.msg?.system?.arch || 'unknown';
+    const osPlatform = worker.msg?.system?.platform || 'unknown';
+    const platformIcon = osPlatform === 'linux' ? '<i class="fab fa-linux"></i>' : 
+                     osPlatform === 'win32' ? '<i class="fab fa-windows"></i>' : 
+                     osPlatform === 'darwin' ? '<i class="fab fa-apple"></i>' : 
+                     '<i class="fa fa-question"></i>';
 
-    // CPU
-    const cpuAvail = worker.resources?.cpus?.available || 0;
-    const cpuTotal = worker.resources?.cpus?.allocated || 0;
-    const cpuUsed = worker.usage?.cpu?.total || 0;
+    const osDisplay = `${platformIcon} ${osDistro} (${osArch})`;
 
-    // Memory
-    const memAvail = worker.resources?.memory?.available || 0;
-    const memTotal = worker.resources?.memory?.allocated || 0;
-    const memUsed = worker.usage?.memory?.used || 0;
+    // ✅ CPU from nested msg.resources and msg.usage
+    const cpuAvail = worker.msg?.resources?.cpus?.available || 0;
+    const cpuTotal = worker.msg?.resources?.cpus?.allocated || 0;
+    const cpuUsed = worker.msg?.usage?.cpu?.total || 0;
+
+    // ✅ Memory from nested msg
+    const memAvail = worker.msg?.resources?.memory?.available || 0;
+    const memTotal = worker.msg?.resources?.memory?.allocated || 0;
     
     const memAvailGB = Math.round(memAvail / (1024 * 1024 * 1024));
     const memTotalGB = Math.round(memTotal / (1024 * 1024 * 1024));
-    const memPercent = worker.usage?.memory?.percent_used || 0;
+    const memPercent = worker.msg?.usage?.memory?.percent_used || 0;
 
-    // GPU
-    const gpuAvail = worker.resources?.gpus?.available || 0;
-    const gpuTotal = worker.resources?.gpus?.allocated || 0;
-    const gpuData = worker.usage?.gpu;
+    // ✅ GPU from nested msg
+    const gpuAvail = worker.msg?.resources?.gpus?.available || 0;
+    const gpuTotal = worker.msg?.resources?.gpus?.allocated || 0;
+    const gpuData = worker.msg?.usage?.gpu;
     const gpuUsed = gpuData?.total_utilization || 0;
     const gpuMemMB = gpuData?.total_memory_total_mb || 0;
     const gpuMemGB = Math.round(gpuMemMB / 1024);
 
-    // Uptime
-    const procUptime = worker.uptime?.proc_dhms || 'N/A';
-    const sysUptime = worker.uptime?.sys_dhms || 'N/A';
+    // ✅ Uptime from nested msg.uptime
+    const procUptime = worker.msg?.uptime?.proc_dhms || 'N/A';
+    const sysUptime = worker.msg?.uptime?.sys_dhms || 'N/A';
     
-    // ✅ Last seen age
+    // Last seen age
     const days = Math.floor(ageSec / 86400);
     const hours = Math.floor((ageSec % 86400) / 3600);
     const minutes = Math.floor((ageSec % 3600) / 60);
@@ -577,15 +561,16 @@ function renderWorkersTable(msg) {
 
     html += '<tr>';
     
-    // ✅ Hostname column with hardware underneath
+    // System column
     html += `<td>
-      <strong>${worker.hostname}</strong><br>
-      <small class="text-muted" style="font-size:0.7em">${worker.sdl_id}</small><br>
+      <strong>${worker.host}</strong><br>
+      <small class="text-muted" style="font-size:0.7em">${worker.sdl_id.substring(0, 8)}...</small><br>
       <small class="text-muted" style="font-size:0.8em">${hardwareDisplay}</small><br>
-      <small class="text-muted" style="font-size:0.8em">${osDistro} ${osArch} ${osPlatform}</small>
+      <small class="text-muted" style="font-size:0.75em"><i title="CPU" class="fa fa-microchip"></i> <i class="fa fa-memory"></i> <span class="dash-val" style="font-weight:bold">${memTotalGB}</span> GB | <span class="dash-val" style="font-weight:bold"> ${cpuTotal}</span>x ${hwCPU}} </small><br>
+      <small class="text-muted" style="font-size:0.75em">${osDisplay}</small>
     </td>`;
     
-    // ✅ Status column with uptime and last seen
+    // Status column
     html += `<td>
       ${statusBadge}<br>
       <small class="text-muted">SDL: ${procUptime}</small><br>
@@ -619,4 +604,149 @@ function renderWorkersTable(msg) {
   html += '</table>';
 
   document.getElementById('dash-sdl-wkrs').innerHTML = html;
+}
+
+
+function renderClusterSummary(msg) {
+  const workers = msg.msg?.workers || {};
+  const workerCount = Object.keys(workers).length;
+  
+  // Aggregate resources from all workers
+  let totalCpus = 0;
+  let totalMemory = 0;
+  let totalGpus = 0;
+  let activeCpus = 0;
+  let activeMemory = 0;
+  let activeGpus = 0;
+  let activeWorkers = 0;
+  
+  const nowSec = Math.floor(Date.now() / 1000);
+  const staleThresholdSec = 60;
+
+  for (const worker of Object.values(workers)) {
+    const ageSec = nowSec - worker.ts_utime;
+    const isActive = ageSec <= staleThresholdSec;
+    
+    // Totals (all workers)
+    totalCpus += worker.msg?.resources?.cpus?.allocated || 0;
+    totalMemory += worker.msg?.resources?.memory?.allocated || 0;
+    totalGpus += worker.msg?.resources?.gpus?.allocated || 0;
+    
+    // Active workers only
+    if (isActive) {
+      activeWorkers++;
+      activeCpus += worker.msg?.resources?.cpus?.available || 0;
+      activeMemory += worker.msg?.resources?.memory?.allocated || 0;
+      activeGpus += worker.msg?.resources?.gpus?.available || 0;
+    }
+  }
+  
+  // Convert memory to GB
+  const totalMemoryGB = Math.round(totalMemory / (1024 * 1024 * 1024));
+  const activeMemoryGB = Math.round(activeMemory / (1024 * 1024 * 1024));
+
+  // Get cluster info from last status message
+  const clusterName = lastSdlStatus?.msg?.cluster?.name || 'Unknown';
+  const clusterDesc = lastSdlStatus?.msg?.cluster?.desc || '';
+
+  let html = `
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h5>Cluster: <span class="dash-val">${clusterName}</span></h5>
+      <small class="dash-val">${clusterDesc}</small>
+    </div>
+  `;
+
+  html += '<div class="row">';
+  
+    // SDL card
+  html += `
+    <div class="col-md-3">
+      <div class="card border mb-3">
+        <div class="card-body">
+          <h6 class="card-title">
+            <i class="fa-solid fa-square-binary"></i> SDL
+          </h6>
+          <span class="card-text">Version: <span class="dash-val">v${config?.sdl?.version}</span></span><br>
+          <span class="card-text">Uptime: <span class="dash-val" id="dash-sdl-uptime"></span></span><br>
+          <span class="card-text">Status: <span class="dash-val" id="dash-sdl-status"></span></span>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Workers card 
+  html += `
+    <div class="col-md-2">
+      <div class="card border mb-3">
+        <div class="card-body">
+          <h6 class="card-title">
+            <i class="fa fa-server"></i> Workers
+          </h6>
+          <h3 class="card-text dash-val">${activeWorkers}</h3>
+          <small class="text-muted">of ${workerCount} total</small>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  // CPU card 
+  html += `
+    <div class="col-md-2">
+      <div class="card border mb-3">
+        <div class="card-body">
+          <h6 class="card-title">
+            <i class="fa fa-microchip"></i> CPU Cores
+          </h6>
+          <h3 class="card-text dash-val">${activeCpus}</h3>
+          <small class="text-muted">of ${totalCpus} total</small>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  // Memory card 
+  html += `
+    <div class="col-md-2">
+      <div class="card border mb-3">
+        <div class="card-body">
+          <h6 class="card-title">
+            <i class="fa fa-memory"></i> RAM
+          </h6>
+          <h3 class="card-text dash-val">${activeMemoryGB} GB</h3>
+          <small class="text-muted">of ${totalMemoryGB} GB total</small>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  // GPU card 
+  html += `
+    <div class="col-md-2">
+      <div class="card border mb-3">
+        <div class="card-body">
+          <h6 class="card-title">
+            <i class="fa fa-dice-d20"></i> GPUs
+          </h6>
+          <h3 class="card-text dash-val">${activeGpus}</h3>
+          <small class="text-muted">of ${totalGpus} total</small>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  html += '</div>'; // end row
+
+  document.getElementById('dash-sdl-clstr').innerHTML = html;
+
+  // Read dash-sdl-uptime from Session Storage
+  const dashSdlUptime = sessionStorage.getItem('dash-sdl-uptime');
+  if (dashSdlUptime) {
+    document.getElementById('dash-sdl-uptime').innerHTML = dashSdlUptime;
+  }
+
+  // Read dash-sdl-status from Session Storage
+  const dashSdlStatus = sessionStorage.getItem('dash-sdl-status');
+  if (dashSdlStatus) {
+    document.getElementById('dash-sdl-status').innerHTML = dashSdlStatus;
+  }
 }

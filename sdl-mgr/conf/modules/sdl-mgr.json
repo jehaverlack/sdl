@@ -4,9 +4,9 @@
     "worker_stale_threshold": 15000,
     "update_interval": {
         "udp_beacon": 2000,
-        "cluster_status": 10000,
-        "cluster_workers": 2000,
-        "cluster_telemetry": 1000
+        "cluster_status": 2000,
+        "cluster_workers": 1000,
+        "cluster_telemetry": 500
     },
     "expiration_timeout": {
         "cluster_status": 60000,

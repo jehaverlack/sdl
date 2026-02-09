@@ -557,31 +557,7 @@ function startTelemetryListener() {
       const now = new Date();
       
       // ✅ Build/update worker state from telemetry
-      workersState[sdl_id] = {
-        sdl_id: sdl_id,
-        hostname: hostname,
-        role: telemetry.role,
-        last_seen: now.toISOString(),           // ✅ ISO string
-        last_seen_utime: Math.floor(now.getTime() / 1000),  // ✅ Unix timestamp (seconds)
-             
-        // System info
-        platform: telemetry.msg?.system?.platform,
-        arch: telemetry.msg?.system?.arch,
-        distro: telemetry.msg?.system?.distro,
-        hardware: telemetry.msg?.system?.hardware,
-        
-        // Uptime
-        uptime: telemetry.msg?.uptime,
-        
-        // Resources
-        resources: telemetry.msg?.resources,
-        
-        // Usage
-        usage: telemetry.msg?.usage,
-        
-        // Load
-        load: telemetry.msg?.load
-      };
+      workersState[sdl_id] = telemetry
 
     } catch (err) {
       log(`${module}: failed to process telemetry: ${err}`);
